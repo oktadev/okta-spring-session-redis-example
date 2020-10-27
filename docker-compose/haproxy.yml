@@ -1,0 +1,9 @@
+version: '2'
+services:
+  haproxy:
+    build:
+      context: .
+      dockerfile: Dockerfile-haproxy
+    image: haproxy
+    ports:
+      - 80:80
