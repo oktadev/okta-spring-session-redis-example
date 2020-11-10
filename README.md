@@ -13,7 +13,7 @@ Prerequisites:
 
 ## Getting Started
 
-To install this example, run the following commands:
+To run this example, run the following commands:
 ```bash
 git clone https://github.com/indiepopart/jhipster-spring-session.git
 ```
