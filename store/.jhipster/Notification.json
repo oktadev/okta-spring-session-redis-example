@@ -33,7 +33,7 @@
     }
   ],
   "relationships": [],
-  "changelogDate": "20201023171546",
+  "changelogDate": "20201208033355",
   "entityTableName": "notification",
   "dto": "no",
   "pagination": "no",

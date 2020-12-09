@@ -75,6 +75,11 @@ spring:
         size: 1
   thymeleaf:
     mode: HTML
+  session:
+    store-type: none
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
   # Allow SecurityConfiguration to initialize w/o specifying an empty issuer-uri is OK
   security:
     oauth2:
@@ -82,11 +87,7 @@ spring:
         provider:
           oidc:
             issuer-uri: http://DO_NOT_CALL:9080/auth/realms/jhipster
-  session:
-    store-type: none
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+
 server:
   port: 10344
   address: localhost

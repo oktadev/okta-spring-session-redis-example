@@ -63,6 +63,8 @@ spring:
     password:
   thymeleaf:
     cache: true
+  session:
+    store-type: redis
   sleuth:
     sampler:
       probability: 1 # report 100% of traces
@@ -72,9 +74,6 @@ spring:
     locator:
       discovery:
         enabled: true
-  session:
-    store-type: redis
-
 
 # ===================================================================
 # To enable TLS in production, generate a certificate using:
