@@ -17,6 +17,7 @@ To run this example, run the following commands:
 
 ```bash
 git clone https://github.com/oktadeveloper/okta-spring-session-redis-example.git
+cd okta-spring-session-redis-example
 ```
 
 ## Create the OIDC Application in Okta
