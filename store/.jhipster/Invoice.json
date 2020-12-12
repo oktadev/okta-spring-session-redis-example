@@ -46,7 +46,7 @@
       "relationshipName": "shipment"
     }
   ],
-  "changelogDate": "20201023171346",
+  "changelogDate": "20201208033155",
   "entityTableName": "invoice",
   "dto": "no",
   "pagination": "pagination",

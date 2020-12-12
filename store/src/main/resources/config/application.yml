@@ -165,6 +165,7 @@ spring:
           oidc:
             client-id: web_app
             client-secret: web_app
+
 server:
   servlet:
     session:

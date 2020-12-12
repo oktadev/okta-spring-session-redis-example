@@ -6,7 +6,7 @@
     <!--
         Added the constraints for entity Shipment.
     -->
-    <changeSet id="20201023171446-2" author="jhipster">
+    <changeSet id="20201208033255-2" author="jhipster">
         
         <addForeignKeyConstraint baseColumnNames="invoice_id"
                                  baseTableName="shipment"

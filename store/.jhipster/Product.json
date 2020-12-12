@@ -37,7 +37,7 @@
       "otherEntityField": "name"
     }
   ],
-  "changelogDate": "20201023170946",
+  "changelogDate": "20201208032755",
   "javadoc": "Product sold by the Online store",
   "entityTableName": "product",
   "dto": "no",

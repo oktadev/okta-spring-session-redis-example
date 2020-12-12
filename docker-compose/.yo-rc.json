@@ -7,6 +7,6 @@
     "monitoring": "no",
     "consoleOptions": [],
     "serviceDiscoveryType": "eureka",
-    "jwtSecretKey": "YWY3ZWIzM2NlNTJmMjRjOWNjYzcwMTYwNWZjZTY3YjI2ODM3NDI0ZDc2OWNiZmUyMWI0MDEzMWZkYWY5Njc5MWRhNjJjNGMyYjNkYjBjZTYwYjdjODEwZmM2MjlmOGRlZTQ2Mg=="
+    "jwtSecretKey": "MzI3OTM5NmVjNzQyYjI2MzYxZTY2ZThlNTZhOTdhMWJhODM4MjA5ZTRhNTUwNjExYTI2ZGFmNThmYmM3NmQ1MWJhODVkNTFiYWI4OGRmMjExNDk1MTI2NjQ3ZGRkZGU0MzhkZQ=="
   }
 }

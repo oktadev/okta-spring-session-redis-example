@@ -68,6 +68,8 @@ spring:
     cache-duration: PT1S # 1 second, see the ISO 8601 standard
   thymeleaf:
     cache: false
+  session:
+    store-type: redis
   sleuth:
     sampler:
       probability: 1 # report 100% of traces
@@ -77,9 +79,6 @@ spring:
     locator:
       discovery:
         enabled: true
-  session:
-    store-type: redis
-
 
 server:
   port: 8080

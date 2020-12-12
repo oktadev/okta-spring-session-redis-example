@@ -76,11 +76,11 @@ services:
     hostname: store2
     ports:
       - '8081:8080'
-  store-redis:
-    image: 'redis:6.0.8'
-    command: redis-server --requirepass password
-    ports:
-      - '6379:6379'
+  haproxy:
+    extends:
+      file: haproxy.yml
+      service: haproxy
+
   store-mysql:
     image: 'mysql:8.0.20'
     environment:
@@ -97,7 +97,8 @@ services:
     extends:
       file: keycloak.yml
       service: keycloak
-  haproxy:
-    extends:
-      file: haproxy.yml
-      service: haproxy
+  store-redis:
+    image: 'redis:6.0.8'
+    command: redis-server --requirepass password
+    ports:
+      - '6379:6379'
