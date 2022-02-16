@@ -2,15 +2,13 @@ package com.jhipster.demo.invoice.service;
 
 import com.jhipster.demo.invoice.domain.Shipment;
 import com.jhipster.demo.invoice.repository.ShipmentRepository;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Optional;
 
 /**
  * Service Implementation for managing {@link Shipment}.
@@ -39,6 +37,33 @@ public class ShipmentService {
     }
 
     /**
+     * Partially update a shipment.
+     *
+     * @param shipment the entity to update partially.
+     * @return the persisted entity.
+     */
+    public Optional<Shipment> partialUpdate(Shipment shipment) {
+        log.debug("Request to partially update Shipment : {}", shipment);
+
+        return shipmentRepository
+            .findById(shipment.getId())
+            .map(existingShipment -> {
+                if (shipment.getTrackingCode() != null) {
+                    existingShipment.setTrackingCode(shipment.getTrackingCode());
+                }
+                if (shipment.getDate() != null) {
+                    existingShipment.setDate(shipment.getDate());
+                }
+                if (shipment.getDetails() != null) {
+                    existingShipment.setDetails(shipment.getDetails());
+                }
+
+                return existingShipment;
+            })
+            .map(shipmentRepository::save);
+    }
+
+    /**
      * Get all the shipments.
      *
      * @param pageable the pagination information.
@@ -49,7 +74,6 @@ public class ShipmentService {
         log.debug("Request to get all Shipments");
         return shipmentRepository.findAll(pageable);
     }
-
 
     /**
      * Get one shipment by id.

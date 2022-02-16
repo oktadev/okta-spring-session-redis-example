@@ -1,11 +1,11 @@
-import { Moment } from 'moment';
+import dayjs from 'dayjs';
 import { IInvoice } from 'app/shared/model/invoice/invoice.model';
 
 export interface IShipment {
   id?: number;
-  trackingCode?: string;
+  trackingCode?: string | null;
   date?: string;
-  details?: string;
+  details?: string | null;
   invoice?: IInvoice;
 }
 

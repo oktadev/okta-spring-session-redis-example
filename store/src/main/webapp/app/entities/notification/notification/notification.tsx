@@ -1,32 +1,45 @@
 import React, { useState, useEffect } from 'react';
-import { connect } from 'react-redux';
 import { Link, RouteComponentProps } from 'react-router-dom';
-import { Button, Col, Row, Table } from 'reactstrap';
-import { Translate, ICrudGetAllAction, TextFormat } from 'react-jhipster';
+import { Button, Table } from 'reactstrap';
+import { Translate, TextFormat } from 'react-jhipster';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-import { IRootState } from 'app/shared/reducers';
 import { getEntities } from './notification.reducer';
 import { INotification } from 'app/shared/model/notification/notification.model';
 import { APP_DATE_FORMAT, APP_LOCAL_DATE_FORMAT } from 'app/config/constants';
+import { useAppDispatch, useAppSelector } from 'app/config/store';
 
-export interface INotificationProps extends StateProps, DispatchProps, RouteComponentProps<{ url: string }> {}
+export const Notification = (props: RouteComponentProps<{ url: string }>) => {
+  const dispatch = useAppDispatch();
 
-export const Notification = (props: INotificationProps) => {
+  const notificationList = useAppSelector(state => state.notification.entities);
+  const loading = useAppSelector(state => state.notification.loading);
+
   useEffect(() => {
-    props.getEntities();
+    dispatch(getEntities({}));
   }, []);
 
-  const { notificationList, match, loading } = props;
+  const handleSyncList = () => {
+    dispatch(getEntities({}));
+  };
+
+  const { match } = props;
+
   return (
     <div>
-      <h2 id="notification-heading">
+      <h2 id="notification-heading" data-cy="NotificationHeading">
         <Translate contentKey="storeApp.notificationNotification.home.title">Notifications</Translate>
-        <Link to={`${match.url}/new`} className="btn btn-primary float-right jh-create-entity" id="jh-create-entity">
-          <FontAwesomeIcon icon="plus" />
-          &nbsp;
-          <Translate contentKey="storeApp.notificationNotification.home.createLabel">Create new Notification</Translate>
-        </Link>
+        <div className="d-flex justify-content-end">
+          <Button className="me-2" color="info" onClick={handleSyncList} disabled={loading}>
+            <FontAwesomeIcon icon="sync" spin={loading} />{' '}
+            <Translate contentKey="storeApp.notificationNotification.home.refreshListLabel">Refresh List</Translate>
+          </Button>
+          <Link to={`${match.url}/new`} className="btn btn-primary jh-create-entity" id="jh-create-entity" data-cy="entityCreateButton">
+            <FontAwesomeIcon icon="plus" />
+            &nbsp;
+            <Translate contentKey="storeApp.notificationNotification.home.createLabel">Create new Notification</Translate>
+          </Link>
+        </div>
       </h2>
       <div className="table-responsive">
         {notificationList && notificationList.length > 0 ? (
@@ -34,7 +47,7 @@ export const Notification = (props: INotificationProps) => {
             <thead>
               <tr>
                 <th>
-                  <Translate contentKey="global.field.id">ID</Translate>
+                  <Translate contentKey="storeApp.notificationNotification.id">ID</Translate>
                 </th>
                 <th>
                   <Translate contentKey="storeApp.notificationNotification.date">Date</Translate>
@@ -59,7 +72,7 @@ export const Notification = (props: INotificationProps) => {
             </thead>
             <tbody>
               {notificationList.map((notification, i) => (
-                <tr key={`entity-${i}`}>
+                <tr key={`entity-${i}`} data-cy="entityTable">
                   <td>
                     <Button tag={Link} to={`${match.url}/${notification.id}`} color="link" size="sm">
                       {notification.id}
@@ -75,21 +88,27 @@ export const Notification = (props: INotificationProps) => {
                   </td>
                   <td>{notification.userId}</td>
                   <td>{notification.productId}</td>
-                  <td className="text-right">
+                  <td className="text-end">
                     <div className="btn-group flex-btn-group-container">
-                      <Button tag={Link} to={`${match.url}/${notification.id}`} color="info" size="sm">
+                      <Button tag={Link} to={`${match.url}/${notification.id}`} color="info" size="sm" data-cy="entityDetailsButton">
                         <FontAwesomeIcon icon="eye" />{' '}
                         <span className="d-none d-md-inline">
                           <Translate contentKey="entity.action.view">View</Translate>
                         </span>
                       </Button>
-                      <Button tag={Link} to={`${match.url}/${notification.id}/edit`} color="primary" size="sm">
+                      <Button tag={Link} to={`${match.url}/${notification.id}/edit`} color="primary" size="sm" data-cy="entityEditButton">
                         <FontAwesomeIcon icon="pencil-alt" />{' '}
                         <span className="d-none d-md-inline">
                           <Translate contentKey="entity.action.edit">Edit</Translate>
                         </span>
                       </Button>
-                      <Button tag={Link} to={`${match.url}/${notification.id}/delete`} color="danger" size="sm">
+                      <Button
+                        tag={Link}
+                        to={`${match.url}/${notification.id}/delete`}
+                        color="danger"
+                        size="sm"
+                        data-cy="entityDeleteButton"
+                      >
                         <FontAwesomeIcon icon="trash" />{' '}
                         <span className="d-none d-md-inline">
                           <Translate contentKey="entity.action.delete">Delete</Translate>
@@ -113,16 +132,4 @@ export const Notification = (props: INotificationProps) => {
   );
 };
 
-const mapStateToProps = ({ notification }: IRootState) => ({
-  notificationList: notification.entities,
-  loading: notification.loading,
-});
-
-const mapDispatchToProps = {
-  getEntities,
-};
-
-type StateProps = ReturnType<typeof mapStateToProps>;
-type DispatchProps = typeof mapDispatchToProps;
-
-export default connect(mapStateToProps, mapDispatchToProps)(Notification);
+export default Notification;

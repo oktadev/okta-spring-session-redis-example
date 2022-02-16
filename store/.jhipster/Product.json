@@ -1,5 +1,11 @@
 {
-  "name": "Product",
+  "applications": ["store", "product"],
+  "changelogDate": "20220216003835",
+  "clientRootFolder": "product",
+  "databaseType": "sql",
+  "dto": "no",
+  "embedded": false,
+  "entityTableName": "product",
   "fields": [
     {
       "fieldName": "name",
@@ -17,10 +23,10 @@
       "fieldValidateRulesMin": "0"
     },
     {
-      "fieldName": "size",
+      "fieldName": "productSize",
       "fieldType": "Size",
-      "fieldValues": "S,M,L,XL,XXL",
-      "fieldValidateRules": ["required"]
+      "fieldValidateRules": ["required"],
+      "fieldValues": "S,M,L,XL,XXL"
     },
     {
       "fieldName": "image",
@@ -28,26 +34,21 @@
       "fieldTypeBlobContent": "image"
     }
   ],
+  "fluentMethods": true,
+  "javadoc": "Product sold by the Online store",
+  "jpaMetamodelFiltering": false,
+  "microserviceName": "product",
+  "name": "Product",
+  "pagination": "pagination",
+  "readOnly": false,
   "relationships": [
     {
-      "relationshipType": "many-to-one",
+      "otherEntityField": "name",
       "otherEntityName": "productCategory",
       "otherEntityRelationshipName": "product",
       "relationshipName": "productCategory",
-      "otherEntityField": "name"
+      "relationshipType": "many-to-one"
     }
   ],
-  "changelogDate": "20201208032755",
-  "javadoc": "Product sold by the Online store",
-  "entityTableName": "product",
-  "dto": "no",
-  "pagination": "pagination",
-  "service": "serviceClass",
-  "jpaMetamodelFiltering": false,
-  "fluentMethods": true,
-  "readOnly": false,
-  "embedded": false,
-  "clientRootFolder": "",
-  "applications": ["store", "product"],
-  "microserviceName": "product"
+  "service": "serviceClass"
 }

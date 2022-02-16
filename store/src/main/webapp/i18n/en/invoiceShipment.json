@@ -3,6 +3,7 @@
     "invoiceShipment": {
       "home": {
         "title": "Shipments",
+        "refreshListLabel": "Refresh list",
         "createLabel": "Create a new Shipment",
         "createOrEditLabel": "Create or edit a Shipment",
         "notFound": "No Shipments found"
@@ -13,6 +14,7 @@
       "detail": {
         "title": "Shipment"
       },
+      "id": "ID",
       "trackingCode": "Tracking Code",
       "date": "Date",
       "details": "Details",

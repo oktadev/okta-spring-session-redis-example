@@ -1,39 +1,42 @@
-import React, { useEffect } from 'react';
-import { connect } from 'react-redux';
+import React, { useEffect, useState } from 'react';
 import { RouteComponentProps } from 'react-router-dom';
 import { Modal, ModalHeader, ModalBody, ModalFooter, Button } from 'reactstrap';
-import { Translate, ICrudGetAction, ICrudDeleteAction } from 'react-jhipster';
+import { Translate } from 'react-jhipster';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-import { ICustomer } from 'app/shared/model/customer.model';
-import { IRootState } from 'app/shared/reducers';
+import { useAppDispatch, useAppSelector } from 'app/config/store';
 import { getEntity, deleteEntity } from './customer.reducer';
 
-export interface ICustomerDeleteDialogProps extends StateProps, DispatchProps, RouteComponentProps<{ id: string }> {}
+export const CustomerDeleteDialog = (props: RouteComponentProps<{ id: string }>) => {
+  const [loadModal, setLoadModal] = useState(false);
+  const dispatch = useAppDispatch();
 
-export const CustomerDeleteDialog = (props: ICustomerDeleteDialogProps) => {
   useEffect(() => {
-    props.getEntity(props.match.params.id);
+    dispatch(getEntity(props.match.params.id));
+    setLoadModal(true);
   }, []);
+
+  const customerEntity = useAppSelector(state => state.customer.entity);
+  const updateSuccess = useAppSelector(state => state.customer.updateSuccess);
 
   const handleClose = () => {
     props.history.push('/customer' + props.location.search);
   };
 
   useEffect(() => {
-    if (props.updateSuccess) {
+    if (updateSuccess && loadModal) {
       handleClose();
+      setLoadModal(false);
     }
-  }, [props.updateSuccess]);
+  }, [updateSuccess]);
 
   const confirmDelete = () => {
-    props.deleteEntity(props.customerEntity.id);
+    dispatch(deleteEntity(customerEntity.id));
   };
 
-  const { customerEntity } = props;
   return (
     <Modal isOpen toggle={handleClose}>
-      <ModalHeader toggle={handleClose}>
+      <ModalHeader toggle={handleClose} data-cy="customerDeleteDialogHeading">
         <Translate contentKey="entity.delete.title">Confirm delete operation</Translate>
       </ModalHeader>
       <ModalBody id="storeApp.customer.delete.question">
@@ -47,7 +50,7 @@ export const CustomerDeleteDialog = (props: ICustomerDeleteDialogProps) => {
           &nbsp;
           <Translate contentKey="entity.action.cancel">Cancel</Translate>
         </Button>
-        <Button id="jhi-confirm-delete-customer" color="danger" onClick={confirmDelete}>
+        <Button id="jhi-confirm-delete-customer" data-cy="entityConfirmDeleteButton" color="danger" onClick={confirmDelete}>
           <FontAwesomeIcon icon="trash" />
           &nbsp;
           <Translate contentKey="entity.action.delete">Delete</Translate>
@@ -57,14 +60,4 @@ export const CustomerDeleteDialog = (props: ICustomerDeleteDialogProps) => {
   );
 };
 
-const mapStateToProps = ({ customer }: IRootState) => ({
-  customerEntity: customer.entity,
-  updateSuccess: customer.updateSuccess,
-});
-
-const mapDispatchToProps = { getEntity, deleteEntity };
-
-type StateProps = ReturnType<typeof mapStateToProps>;
-type DispatchProps = typeof mapDispatchToProps;
-
-export default connect(mapStateToProps, mapDispatchToProps)(CustomerDeleteDialog);
+export default CustomerDeleteDialog;

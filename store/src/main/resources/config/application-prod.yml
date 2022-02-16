@@ -16,7 +16,7 @@
 logging:
   level:
     ROOT: INFO
-    io.github.jhipster: INFO
+    tech.jhipster: INFO
     com.jhipster.demo.store: INFO
 
 eureka:
@@ -38,28 +38,25 @@ spring:
       enabled: false
     livereload:
       enabled: false
-  datasource:
-    type: com.zaxxer.hikari.HikariDataSource
-    url: jdbc:mysql://localhost:3306/store?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC&createDatabaseIfNotExist=true
-    username: root
-    password:
-    hikari:
-      poolName: Hikari
-      auto-commit: false
-      data-source-properties:
-        cachePrepStmts: true
-        prepStmtCacheSize: 250
-        prepStmtCacheSqlLimit: 2048
-        useServerPrepStmts: true
-  jpa:
-    show-sql: false
+  cloud:
+    config:
+      retry:
+        initial-interval: 1000
+        max-interval: 2000
+        max-attempts: 100
+      uri: http://admin:${jhipster.registry.password}@localhost:8761/config
+      # name of the config server's property source (file.yml) that we want to use
+      name: store
+      profile: prod
+      label: main # toggle to switch to a different version of the configuration as stored in git
+      # it can be set to any label, branch or commit of the configuration source Git repository
   # Replace by 'prod, faker' to add the faker context and have sample data loaded in production
   liquibase:
     contexts: prod
-  mail:
-    host: localhost
-    port: 25
-    username:
+    url: jdbc:mysql://localhost:3306/store?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC&createDatabaseIfNotExist=true
+  r2dbc:
+    url: r2dbc:mysql://localhost:3306/store?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC&createDatabaseIfNotExist=true
+    username: root
     password:
   thymeleaf:
     cache: true
@@ -96,9 +93,10 @@ spring:
 # ===================================================================
 server:
   port: 8080
+  shutdown: graceful # see https://docs.spring.io/spring-boot/docs/current/reference/html/spring-boot-features.html#boot-features-graceful-shutdown
   compression:
     enabled: true
-    mime-types: text/html,text/xml,text/plain,text/css, application/javascript, application/json
+    mime-types: text/html,text/xml,text/plain,text/css,application/javascript,application/json,image/svg+xml
     min-response-size: 1024
 
 # ===================================================================
@@ -108,28 +106,11 @@ server:
 # ===================================================================
 
 jhipster:
-  gateway:
-    rate-limiting:
-      enabled: false
-    authorized-microservices-endpoints: # Access Control Policy, if left empty for a route, all endpoints will be accessible
-      app1: /api # recommended prod configuration
   http:
     cache: # Used by the CachingHttpHeadersFilter
       timeToLiveInDays: 1461
-  cache: # Cache configuration
-    hazelcast: # Hazelcast distributed cache
-      time-to-live-seconds: 3600
-      backup-count: 1
-      management-center: # Full reference is available at: http://docs.hazelcast.org/docs/management-center/3.9/manual/html/Deploying_and_Starting.html
-        enabled: false
-        update-interval: 3
-        url:
-  mail: # specific JHipster mail property, for standard properties see MailProperties
-    base-url: http://my-server-url-to-change # Modify according to your server's URL
-  metrics:
-    logs: # Reports metrics in the logs
-      enabled: false
-      report-frequency: 60 # in seconds
+  registry:
+    password: admin
   logging:
     use-json-format: false # By default, logs are not in Json format
     logstash: # Forward logs to logstash over a socket, used by LoggingConfiguration
@@ -137,9 +118,6 @@ jhipster:
       host: localhost
       port: 5000
       queue-size: 512
-  audit-events:
-    retention-period: 30 # Number of days before audit events are deleted.
-
 # ===================================================================
 # Application specific properties
 # Add your own application properties here, see the ApplicationProperties class

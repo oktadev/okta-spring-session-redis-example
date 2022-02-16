@@ -3,6 +3,7 @@
     "customer": {
       "home": {
         "title": "Customers",
+        "refreshListLabel": "Refresh list",
         "createLabel": "Create a new Customer",
         "createOrEditLabel": "Create or edit a Customer",
         "notFound": "No Customers found"
@@ -16,6 +17,7 @@
       "detail": {
         "title": "Customer"
       },
+      "id": "ID",
       "firstName": "First Name",
       "lastName": "Last Name",
       "gender": "Gender",

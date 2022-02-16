@@ -1,65 +1,78 @@
 import React, { useState, useEffect } from 'react';
-import { connect } from 'react-redux';
 import { Link, RouteComponentProps } from 'react-router-dom';
-import { Button, Row, Col, Label } from 'reactstrap';
-import { AvFeedback, AvForm, AvGroup, AvInput, AvField } from 'availity-reactstrap-validation';
-import { Translate, translate, ICrudGetAction, ICrudGetAllAction, ICrudPutAction } from 'react-jhipster';
+import { Button, Row, Col, FormText } from 'reactstrap';
+import { isNumber, Translate, translate, ValidatedField, ValidatedForm } from 'react-jhipster';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { IRootState } from 'app/shared/reducers';
 
 import { getEntity, updateEntity, createEntity, reset } from './notification.reducer';
 import { INotification } from 'app/shared/model/notification/notification.model';
 import { convertDateTimeFromServer, convertDateTimeToServer, displayDefaultDateTime } from 'app/shared/util/date-utils';
 import { mapIdList } from 'app/shared/util/entity-utils';
+import { useAppDispatch, useAppSelector } from 'app/config/store';
+import { NotificationType } from 'app/shared/model/enumerations/notification-type.model';
 
-export interface INotificationUpdateProps extends StateProps, DispatchProps, RouteComponentProps<{ id: string }> {}
+export const NotificationUpdate = (props: RouteComponentProps<{ id: string }>) => {
+  const dispatch = useAppDispatch();
 
-export const NotificationUpdate = (props: INotificationUpdateProps) => {
-  const [isNew, setIsNew] = useState(!props.match.params || !props.match.params.id);
+  const [isNew] = useState(!props.match.params || !props.match.params.id);
 
-  const { notificationEntity, loading, updating } = props;
-
+  const notificationEntity = useAppSelector(state => state.notification.entity);
+  const loading = useAppSelector(state => state.notification.loading);
+  const updating = useAppSelector(state => state.notification.updating);
+  const updateSuccess = useAppSelector(state => state.notification.updateSuccess);
+  const notificationTypeValues = Object.keys(NotificationType);
   const handleClose = () => {
     props.history.push('/notification');
   };
 
   useEffect(() => {
     if (isNew) {
-      props.reset();
+      dispatch(reset());
     } else {
-      props.getEntity(props.match.params.id);
+      dispatch(getEntity(props.match.params.id));
     }
   }, []);
 
   useEffect(() => {
-    if (props.updateSuccess) {
+    if (updateSuccess) {
       handleClose();
     }
-  }, [props.updateSuccess]);
+  }, [updateSuccess]);
 
-  const saveEntity = (event, errors, values) => {
+  const saveEntity = values => {
     values.date = convertDateTimeToServer(values.date);
     values.sentDate = convertDateTimeToServer(values.sentDate);
 
-    if (errors.length === 0) {
-      const entity = {
-        ...notificationEntity,
-        ...values,
-      };
+    const entity = {
+      ...notificationEntity,
+      ...values,
+    };
 
-      if (isNew) {
-        props.createEntity(entity);
-      } else {
-        props.updateEntity(entity);
-      }
+    if (isNew) {
+      dispatch(createEntity(entity));
+    } else {
+      dispatch(updateEntity(entity));
     }
   };
+
+  const defaultValues = () =>
+    isNew
+      ? {
+          date: displayDefaultDateTime(),
+          sentDate: displayDefaultDateTime(),
+        }
+      : {
+          format: 'EMAIL',
+          ...notificationEntity,
+          date: convertDateTimeFromServer(notificationEntity.date),
+          sentDate: convertDateTimeFromServer(notificationEntity.sentDate),
+        };
 
   return (
     <div>
       <Row className="justify-content-center">
         <Col md="8">
-          <h2 id="storeApp.notificationNotification.home.createOrEditLabel">
+          <h2 id="storeApp.notificationNotification.home.createOrEditLabel" data-cy="NotificationCreateUpdateHeading">
             <Translate contentKey="storeApp.notificationNotification.home.createOrEditLabel">Create or edit a Notification</Translate>
           </h2>
         </Col>
@@ -69,100 +82,82 @@ export const NotificationUpdate = (props: INotificationUpdateProps) => {
           {loading ? (
             <p>Loading...</p>
           ) : (
-            <AvForm model={isNew ? {} : notificationEntity} onSubmit={saveEntity}>
+            <ValidatedForm defaultValues={defaultValues()} onSubmit={saveEntity}>
               {!isNew ? (
-                <AvGroup>
-                  <Label for="notification-id">
-                    <Translate contentKey="global.field.id">ID</Translate>
-                  </Label>
-                  <AvInput id="notification-id" type="text" className="form-control" name="id" required readOnly />
-                </AvGroup>
+                <ValidatedField
+                  name="id"
+                  required
+                  readOnly
+                  id="notification-id"
+                  label={translate('global.field.id')}
+                  validate={{ required: true }}
+                />
               ) : null}
-              <AvGroup>
-                <Label id="dateLabel" for="notification-date">
-                  <Translate contentKey="storeApp.notificationNotification.date">Date</Translate>
-                </Label>
-                <AvInput
-                  id="notification-date"
-                  type="datetime-local"
-                  className="form-control"
-                  name="date"
-                  placeholder={'YYYY-MM-DD HH:mm'}
-                  value={isNew ? displayDefaultDateTime() : convertDateTimeFromServer(props.notificationEntity.date)}
-                  validate={{
-                    required: { value: true, errorMessage: translate('entity.validation.required') },
-                  }}
-                />
-              </AvGroup>
-              <AvGroup>
-                <Label id="detailsLabel" for="notification-details">
-                  <Translate contentKey="storeApp.notificationNotification.details">Details</Translate>
-                </Label>
-                <AvField id="notification-details" type="text" name="details" />
-              </AvGroup>
-              <AvGroup>
-                <Label id="sentDateLabel" for="notification-sentDate">
-                  <Translate contentKey="storeApp.notificationNotification.sentDate">Sent Date</Translate>
-                </Label>
-                <AvInput
-                  id="notification-sentDate"
-                  type="datetime-local"
-                  className="form-control"
-                  name="sentDate"
-                  placeholder={'YYYY-MM-DD HH:mm'}
-                  value={isNew ? displayDefaultDateTime() : convertDateTimeFromServer(props.notificationEntity.sentDate)}
-                  validate={{
-                    required: { value: true, errorMessage: translate('entity.validation.required') },
-                  }}
-                />
-              </AvGroup>
-              <AvGroup>
-                <Label id="formatLabel" for="notification-format">
-                  <Translate contentKey="storeApp.notificationNotification.format">Format</Translate>
-                </Label>
-                <AvInput
-                  id="notification-format"
-                  type="select"
-                  className="form-control"
-                  name="format"
-                  value={(!isNew && notificationEntity.format) || 'EMAIL'}
-                >
-                  <option value="EMAIL">{translate('storeApp.NotificationType.EMAIL')}</option>
-                  <option value="SMS">{translate('storeApp.NotificationType.SMS')}</option>
-                  <option value="PARCEL">{translate('storeApp.NotificationType.PARCEL')}</option>
-                </AvInput>
-              </AvGroup>
-              <AvGroup>
-                <Label id="userIdLabel" for="notification-userId">
-                  <Translate contentKey="storeApp.notificationNotification.userId">User Id</Translate>
-                </Label>
-                <AvField
-                  id="notification-userId"
-                  type="string"
-                  className="form-control"
-                  name="userId"
-                  validate={{
-                    required: { value: true, errorMessage: translate('entity.validation.required') },
-                    number: { value: true, errorMessage: translate('entity.validation.number') },
-                  }}
-                />
-              </AvGroup>
-              <AvGroup>
-                <Label id="productIdLabel" for="notification-productId">
-                  <Translate contentKey="storeApp.notificationNotification.productId">Product Id</Translate>
-                </Label>
-                <AvField
-                  id="notification-productId"
-                  type="string"
-                  className="form-control"
-                  name="productId"
-                  validate={{
-                    required: { value: true, errorMessage: translate('entity.validation.required') },
-                    number: { value: true, errorMessage: translate('entity.validation.number') },
-                  }}
-                />
-              </AvGroup>
-              <Button tag={Link} id="cancel-save" to="/notification" replace color="info">
+              <ValidatedField
+                label={translate('storeApp.notificationNotification.date')}
+                id="notification-date"
+                name="date"
+                data-cy="date"
+                type="datetime-local"
+                placeholder="YYYY-MM-DD HH:mm"
+                validate={{
+                  required: { value: true, message: translate('entity.validation.required') },
+                }}
+              />
+              <ValidatedField
+                label={translate('storeApp.notificationNotification.details')}
+                id="notification-details"
+                name="details"
+                data-cy="details"
+                type="text"
+              />
+              <ValidatedField
+                label={translate('storeApp.notificationNotification.sentDate')}
+                id="notification-sentDate"
+                name="sentDate"
+                data-cy="sentDate"
+                type="datetime-local"
+                placeholder="YYYY-MM-DD HH:mm"
+                validate={{
+                  required: { value: true, message: translate('entity.validation.required') },
+                }}
+              />
+              <ValidatedField
+                label={translate('storeApp.notificationNotification.format')}
+                id="notification-format"
+                name="format"
+                data-cy="format"
+                type="select"
+              >
+                {notificationTypeValues.map(notificationType => (
+                  <option value={notificationType} key={notificationType}>
+                    {translate('storeApp.NotificationType.' + notificationType)}
+                  </option>
+                ))}
+              </ValidatedField>
+              <ValidatedField
+                label={translate('storeApp.notificationNotification.userId')}
+                id="notification-userId"
+                name="userId"
+                data-cy="userId"
+                type="text"
+                validate={{
+                  required: { value: true, message: translate('entity.validation.required') },
+                  validate: v => isNumber(v) || translate('entity.validation.number'),
+                }}
+              />
+              <ValidatedField
+                label={translate('storeApp.notificationNotification.productId')}
+                id="notification-productId"
+                name="productId"
+                data-cy="productId"
+                type="text"
+                validate={{
+                  required: { value: true, message: translate('entity.validation.required') },
+                  validate: v => isNumber(v) || translate('entity.validation.number'),
+                }}
+              />
+              <Button tag={Link} id="cancel-save" data-cy="entityCreateCancelButton" to="/notification" replace color="info">
                 <FontAwesomeIcon icon="arrow-left" />
                 &nbsp;
                 <span className="d-none d-md-inline">
@@ -170,12 +165,12 @@ export const NotificationUpdate = (props: INotificationUpdateProps) => {
                 </span>
               </Button>
               &nbsp;
-              <Button color="primary" id="save-entity" type="submit" disabled={updating}>
+              <Button color="primary" id="save-entity" data-cy="entityCreateSaveButton" type="submit" disabled={updating}>
                 <FontAwesomeIcon icon="save" />
                 &nbsp;
                 <Translate contentKey="entity.action.save">Save</Translate>
               </Button>
-            </AvForm>
+            </ValidatedForm>
           )}
         </Col>
       </Row>
@@ -183,21 +178,4 @@ export const NotificationUpdate = (props: INotificationUpdateProps) => {
   );
 };
 
-const mapStateToProps = (storeState: IRootState) => ({
-  notificationEntity: storeState.notification.entity,
-  loading: storeState.notification.loading,
-  updating: storeState.notification.updating,
-  updateSuccess: storeState.notification.updateSuccess,
-});
-
-const mapDispatchToProps = {
-  getEntity,
-  updateEntity,
-  createEntity,
-  reset,
-};
-
-type StateProps = ReturnType<typeof mapStateToProps>;
-type DispatchProps = typeof mapDispatchToProps;
-
-export default connect(mapStateToProps, mapDispatchToProps)(NotificationUpdate);
+export default NotificationUpdate;

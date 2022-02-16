@@ -1,74 +1,76 @@
 package com.jhipster.demo.store.domain;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import javax.persistence.*;
-import javax.validation.constraints.*;
-
-import java.io.Serializable;
-
 import com.jhipster.demo.store.domain.enumeration.Gender;
+import java.io.Serializable;
+import javax.validation.constraints.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 
 /**
  * A Customer.
  */
-@Entity
-@Table(name = "customer")
-@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+@Table("customer")
 public class Customer implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column("id")
     private Long id;
 
-    @NotNull
-    @Column(name = "first_name", nullable = false)
+    @NotNull(message = "must not be null")
+    @Column("first_name")
     private String firstName;
 
-    @NotNull
-    @Column(name = "last_name", nullable = false)
+    @NotNull(message = "must not be null")
+    @Column("last_name")
     private String lastName;
 
-    @NotNull
-    @Enumerated(EnumType.STRING)
-    @Column(name = "gender", nullable = false)
+    @NotNull(message = "must not be null")
+    @Column("gender")
     private Gender gender;
 
-    @NotNull
+    @NotNull(message = "must not be null")
     @Pattern(regexp = "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")
-    @Column(name = "email", nullable = false)
+    @Column("email")
     private String email;
 
-    @NotNull
-    @Column(name = "phone", nullable = false)
+    @NotNull(message = "must not be null")
+    @Column("phone")
     private String phone;
 
-    @NotNull
-    @Column(name = "address_line_1", nullable = false)
+    @NotNull(message = "must not be null")
+    @Column("address_line_1")
     private String addressLine1;
 
-    @Column(name = "address_line_2")
+    @Column("address_line_2")
     private String addressLine2;
 
-    @NotNull
-    @Column(name = "city", nullable = false)
+    @NotNull(message = "must not be null")
+    @Column("city")
     private String city;
 
-    @NotNull
-    @Column(name = "country", nullable = false)
+    @NotNull(message = "must not be null")
+    @Column("country")
     private String country;
 
-    @OneToOne(optional = false)
-    @NotNull
-    @JoinColumn(unique = true)
+    @Transient
     private User user;
 
+    @Column("user_id")
+    private String userId;
+
     // jhipster-needle-entity-add-field - JHipster will add fields here
+
     public Long getId() {
-        return id;
+        return this.id;
+    }
+
+    public Customer id(Long id) {
+        this.setId(id);
+        return this;
     }
 
     public void setId(Long id) {
@@ -76,11 +78,11 @@ public class Customer implements Serializable {
     }
 
     public String getFirstName() {
-        return firstName;
+        return this.firstName;
     }
 
     public Customer firstName(String firstName) {
-        this.firstName = firstName;
+        this.setFirstName(firstName);
         return this;
     }
 
@@ -89,11 +91,11 @@ public class Customer implements Serializable {
     }
 
     public String getLastName() {
-        return lastName;
+        return this.lastName;
     }
 
     public Customer lastName(String lastName) {
-        this.lastName = lastName;
+        this.setLastName(lastName);
         return this;
     }
 
@@ -102,11 +104,11 @@ public class Customer implements Serializable {
     }
 
     public Gender getGender() {
-        return gender;
+        return this.gender;
     }
 
     public Customer gender(Gender gender) {
-        this.gender = gender;
+        this.setGender(gender);
         return this;
     }
 
@@ -115,11 +117,11 @@ public class Customer implements Serializable {
     }
 
     public String getEmail() {
-        return email;
+        return this.email;
     }
 
     public Customer email(String email) {
-        this.email = email;
+        this.setEmail(email);
         return this;
     }
 
@@ -128,11 +130,11 @@ public class Customer implements Serializable {
     }
 
     public String getPhone() {
-        return phone;
+        return this.phone;
     }
 
     public Customer phone(String phone) {
-        this.phone = phone;
+        this.setPhone(phone);
         return this;
     }
 
@@ -141,11 +143,11 @@ public class Customer implements Serializable {
     }
 
     public String getAddressLine1() {
-        return addressLine1;
+        return this.addressLine1;
     }
 
     public Customer addressLine1(String addressLine1) {
-        this.addressLine1 = addressLine1;
+        this.setAddressLine1(addressLine1);
         return this;
     }
 
@@ -154,11 +156,11 @@ public class Customer implements Serializable {
     }
 
     public String getAddressLine2() {
-        return addressLine2;
+        return this.addressLine2;
     }
 
     public Customer addressLine2(String addressLine2) {
-        this.addressLine2 = addressLine2;
+        this.setAddressLine2(addressLine2);
         return this;
     }
 
@@ -167,11 +169,11 @@ public class Customer implements Serializable {
     }
 
     public String getCity() {
-        return city;
+        return this.city;
     }
 
     public Customer city(String city) {
-        this.city = city;
+        this.setCity(city);
         return this;
     }
 
@@ -180,11 +182,11 @@ public class Customer implements Serializable {
     }
 
     public String getCountry() {
-        return country;
+        return this.country;
     }
 
     public Customer country(String country) {
-        this.country = country;
+        this.setCountry(country);
         return this;
     }
 
@@ -193,17 +195,27 @@ public class Customer implements Serializable {
     }
 
     public User getUser() {
-        return user;
-    }
-
-    public Customer user(User user) {
-        this.user = user;
-        return this;
+        return this.user;
     }
 
     public void setUser(User user) {
         this.user = user;
+        this.userId = user != null ? user.getId() : null;
     }
+
+    public Customer user(User user) {
+        this.setUser(user);
+        return this;
+    }
+
+    public String getUserId() {
+        return this.userId;
+    }
+
+    public void setUserId(String user) {
+        this.userId = user;
+    }
+
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here
 
     @Override
@@ -219,7 +231,8 @@ public class Customer implements Serializable {
 
     @Override
     public int hashCode() {
-        return 31;
+        // see https://vladmihalcea.com/how-to-implement-equals-and-hashcode-using-the-jpa-entity-identifier/
+        return getClass().hashCode();
     }
 
     // prettier-ignore

@@ -3,6 +3,7 @@
     "notificationNotification": {
       "home": {
         "title": "Notifications",
+        "refreshListLabel": "Refresh list",
         "createLabel": "Create a new Notification",
         "createOrEditLabel": "Create or edit a Notification",
         "notFound": "No Notifications found"
@@ -13,6 +14,7 @@
       "detail": {
         "title": "Notification"
       },
+      "id": "ID",
       "date": "Date",
       "details": "Details",
       "sentDate": "Sent Date",

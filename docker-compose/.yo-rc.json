@@ -1,12 +1,11 @@
 {
   "generator-jhipster": {
     "appsFolders": ["invoice", "notification", "product", "store"],
-    "directoryPath": "../",
-    "gatewayType": "zuul",
     "clusteredDbApps": [],
+    "directoryPath": "../",
+    "gatewayType": "SpringCloudGateway",
+    "jwtSecretKey": "N2M1OTJmMTZhYmI5ZGQ5M2FmNTk0NmRkNTRmYzE0Y2I3NzhhN2VlYjNmZDRmYmIzNDgyYTQ0OGYzOWJhMThkMTdiZWVkY2JhN2E4YWQwYTlkMmZhMjcwOTc0OWZlMzYyNjk2Yw==",
     "monitoring": "no",
-    "consoleOptions": [],
-    "serviceDiscoveryType": "eureka",
-    "jwtSecretKey": "MzI3OTM5NmVjNzQyYjI2MzYxZTY2ZThlNTZhOTdhMWJhODM4MjA5ZTRhNTUwNjExYTI2ZGFmNThmYmM3NmQ1MWJhODVkNTFiYWI4OGRmMjExNDk1MTI2NjQ3ZGRkZGU0MzhkZQ=="
+    "serviceDiscoveryType": "eureka"
   }
 }

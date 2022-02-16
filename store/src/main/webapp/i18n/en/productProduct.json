@@ -3,6 +3,7 @@
     "productProduct": {
       "home": {
         "title": "Products",
+        "refreshListLabel": "Refresh list",
         "createLabel": "Create a new Product",
         "createOrEditLabel": "Create or edit a Product",
         "notFound": "No Products found"
@@ -13,10 +14,11 @@
       "detail": {
         "title": "Product"
       },
+      "id": "ID",
       "name": "Name",
       "description": "Description",
       "price": "Price",
-      "size": "Size",
+      "productSize": "Product Size",
       "image": "Image",
       "productCategory": "Product Category"
     }

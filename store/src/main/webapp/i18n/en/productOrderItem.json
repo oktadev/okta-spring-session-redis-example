@@ -3,6 +3,7 @@
     "productOrderItem": {
       "home": {
         "title": "Order Items",
+        "refreshListLabel": "Refresh list",
         "createLabel": "Create a new Order Item",
         "createOrEditLabel": "Create or edit a Order Item",
         "notFound": "No Order Items found"
@@ -13,6 +14,7 @@
       "detail": {
         "title": "Order Item"
       },
+      "id": "ID",
       "quantity": "Quantity",
       "totalPrice": "Total Price",
       "status": "Status",

@@ -4,12 +4,12 @@ import { Size } from 'app/shared/model/enumerations/size.model';
 export interface IProduct {
   id?: number;
   name?: string;
-  description?: string;
+  description?: string | null;
   price?: number;
-  size?: Size;
-  imageContentType?: string;
-  image?: any;
-  productCategory?: IProductCategory;
+  productSize?: Size;
+  imageContentType?: string | null;
+  image?: string | null;
+  productCategory?: IProductCategory | null;
 }
 
 export const defaultValue: Readonly<IProduct> = {};

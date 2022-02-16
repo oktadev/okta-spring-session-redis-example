@@ -1,39 +1,42 @@
-import React, { useEffect } from 'react';
-import { connect } from 'react-redux';
+import React, { useEffect, useState } from 'react';
 import { RouteComponentProps } from 'react-router-dom';
 import { Modal, ModalHeader, ModalBody, ModalFooter, Button } from 'reactstrap';
-import { Translate, ICrudGetAction, ICrudDeleteAction } from 'react-jhipster';
+import { Translate } from 'react-jhipster';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-import { IOrderItem } from 'app/shared/model/product/order-item.model';
-import { IRootState } from 'app/shared/reducers';
+import { useAppDispatch, useAppSelector } from 'app/config/store';
 import { getEntity, deleteEntity } from './order-item.reducer';
 
-export interface IOrderItemDeleteDialogProps extends StateProps, DispatchProps, RouteComponentProps<{ id: string }> {}
+export const OrderItemDeleteDialog = (props: RouteComponentProps<{ id: string }>) => {
+  const [loadModal, setLoadModal] = useState(false);
+  const dispatch = useAppDispatch();
 
-export const OrderItemDeleteDialog = (props: IOrderItemDeleteDialogProps) => {
   useEffect(() => {
-    props.getEntity(props.match.params.id);
+    dispatch(getEntity(props.match.params.id));
+    setLoadModal(true);
   }, []);
+
+  const orderItemEntity = useAppSelector(state => state.orderItem.entity);
+  const updateSuccess = useAppSelector(state => state.orderItem.updateSuccess);
 
   const handleClose = () => {
     props.history.push('/order-item' + props.location.search);
   };
 
   useEffect(() => {
-    if (props.updateSuccess) {
+    if (updateSuccess && loadModal) {
       handleClose();
+      setLoadModal(false);
     }
-  }, [props.updateSuccess]);
+  }, [updateSuccess]);
 
   const confirmDelete = () => {
-    props.deleteEntity(props.orderItemEntity.id);
+    dispatch(deleteEntity(orderItemEntity.id));
   };
 
-  const { orderItemEntity } = props;
   return (
     <Modal isOpen toggle={handleClose}>
-      <ModalHeader toggle={handleClose}>
+      <ModalHeader toggle={handleClose} data-cy="orderItemDeleteDialogHeading">
         <Translate contentKey="entity.delete.title">Confirm delete operation</Translate>
       </ModalHeader>
       <ModalBody id="storeApp.productOrderItem.delete.question">
@@ -47,7 +50,7 @@ export const OrderItemDeleteDialog = (props: IOrderItemDeleteDialogProps) => {
           &nbsp;
           <Translate contentKey="entity.action.cancel">Cancel</Translate>
         </Button>
-        <Button id="jhi-confirm-delete-orderItem" color="danger" onClick={confirmDelete}>
+        <Button id="jhi-confirm-delete-orderItem" data-cy="entityConfirmDeleteButton" color="danger" onClick={confirmDelete}>
           <FontAwesomeIcon icon="trash" />
           &nbsp;
           <Translate contentKey="entity.action.delete">Delete</Translate>
@@ -57,14 +60,4 @@ export const OrderItemDeleteDialog = (props: IOrderItemDeleteDialogProps) => {
   );
 };
 
-const mapStateToProps = ({ orderItem }: IRootState) => ({
-  orderItemEntity: orderItem.entity,
-  updateSuccess: orderItem.updateSuccess,
-});
-
-const mapDispatchToProps = { getEntity, deleteEntity };
-
-type StateProps = ReturnType<typeof mapStateToProps>;
-type DispatchProps = typeof mapDispatchToProps;
-
-export default connect(mapStateToProps, mapDispatchToProps)(OrderItemDeleteDialog);
+export default OrderItemDeleteDialog;

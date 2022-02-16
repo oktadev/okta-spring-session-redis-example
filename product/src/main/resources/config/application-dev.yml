@@ -16,7 +16,8 @@
 logging:
   level:
     ROOT: DEBUG
-    io.github.jhipster: DEBUG
+    tech.jhipster: DEBUG
+    org.hibernate.SQL: DEBUG
     com.jhipster.demo.product: DEBUG
 
 eureka:
@@ -27,12 +28,6 @@ eureka:
       defaultZone: http://admin:${jhipster.registry.password}@localhost:8761/eureka/
 
 spring:
-  profiles:
-    active: dev
-    include:
-      - swagger
-      # Uncomment to activate TLS for the dev profile
-      #- tls
   devtools:
     restart:
       enabled: true
@@ -42,6 +37,14 @@ spring:
   jackson:
     serialization:
       indent-output: true
+  cloud:
+    config:
+      uri: http://admin:${jhipster.registry.password}@localhost:8761/config
+      # name of the config server's property source (file.yml) that we want to use
+      name: product
+      profile: dev
+      label: main # toggle to switch to a different version of the configuration as stored in git
+      # it can be set to any label, branch or commit of the configuration source Git repository
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
     url: jdbc:h2:file:./target/h2db/db/product;DB_CLOSE_DELAY=-1
@@ -52,18 +55,13 @@ spring:
       auto-commit: false
   h2:
     console:
+      # disable spring boot built-in h2-console since we start it manually with correct configuration
       enabled: false
   jpa:
-    database-platform: io.github.jhipster.domain.util.FixedH2Dialect
-    show-sql: true
+    database-platform: tech.jhipster.domain.util.FixedH2Dialect
   liquibase:
     # Remove 'faker' if you do not want the sample data to be loaded automatically
     contexts: dev, faker
-  mail:
-    host: localhost
-    port: 25
-    username:
-    password:
   messages:
     cache-duration: PT1S # 1 second, see the ISO 8601 standard
   thymeleaf:
@@ -92,25 +90,17 @@ jhipster:
     hazelcast: # Hazelcast distributed cache
       time-to-live-seconds: 3600
       backup-count: 1
-      management-center: # Full reference is available at: http://docs.hazelcast.org/docs/management-center/3.9/manual/html/Deploying_and_Starting.html
-        enabled: false
-        update-interval: 3
-        url: http://localhost:8180/hazelcast-mancenter
+  registry:
+    password: admin
   # CORS is disabled by default on microservices, as you should access them through a gateway.
   # If you want to enable it, please uncomment the configuration below.
   # cors:
-  #     allowed-origins: "*"
-  #     allowed-methods: "*"
-  #     allowed-headers: "*"
-  #     exposed-headers: "Authorization,Link,X-Total-Count"
-  #     allow-credentials: true
-  #     max-age: 1800
-  mail: # specific JHipster mail property, for standard properties see MailProperties
-    base-url: http://127.0.0.1:8081
-  metrics:
-    logs: # Reports metrics in the logs
-      enabled: false
-      report-frequency: 60 # in seconds
+  #   allowed-origins: "http://localhost:9000,https://localhost:9000"
+  #   allowed-methods: "*"
+  #   allowed-headers: "*"
+  #   exposed-headers: "Authorization,Link,X-Total-Count"
+  #   allow-credentials: true
+  #   max-age: 1800
   logging:
     use-json-format: false # By default, logs are not in Json format
     logstash: # Forward logs to logstash over a socket, used by LoggingConfiguration
@@ -118,9 +108,6 @@ jhipster:
       host: localhost
       port: 5000
       queue-size: 512
-  audit-events:
-    retention-period: 30 # Number of days before audit events are deleted.
-
 # ===================================================================
 # Application specific properties
 # Add your own application properties here, see the ApplicationProperties class

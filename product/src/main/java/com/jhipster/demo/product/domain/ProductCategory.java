@@ -1,14 +1,13 @@
 package com.jhipster.demo.product.domain;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import javax.persistence.*;
-import javax.validation.constraints.*;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
+import javax.persistence.*;
+import javax.validation.constraints.*;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 /**
  * A ProductCategory.
@@ -22,6 +21,7 @@ public class ProductCategory implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
 
     @NotNull
@@ -33,11 +33,18 @@ public class ProductCategory implements Serializable {
 
     @OneToMany(mappedBy = "productCategory")
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+    @JsonIgnoreProperties(value = { "productCategory" }, allowSetters = true)
     private Set<Product> products = new HashSet<>();
 
     // jhipster-needle-entity-add-field - JHipster will add fields here
+
     public Long getId() {
-        return id;
+        return this.id;
+    }
+
+    public ProductCategory id(Long id) {
+        this.setId(id);
+        return this;
     }
 
     public void setId(Long id) {
@@ -45,11 +52,11 @@ public class ProductCategory implements Serializable {
     }
 
     public String getName() {
-        return name;
+        return this.name;
     }
 
     public ProductCategory name(String name) {
-        this.name = name;
+        this.setName(name);
         return this;
     }
 
@@ -58,11 +65,11 @@ public class ProductCategory implements Serializable {
     }
 
     public String getDescription() {
-        return description;
+        return this.description;
     }
 
     public ProductCategory description(String description) {
-        this.description = description;
+        this.setDescription(description);
         return this;
     }
 
@@ -71,11 +78,21 @@ public class ProductCategory implements Serializable {
     }
 
     public Set<Product> getProducts() {
-        return products;
+        return this.products;
+    }
+
+    public void setProducts(Set<Product> products) {
+        if (this.products != null) {
+            this.products.forEach(i -> i.setProductCategory(null));
+        }
+        if (products != null) {
+            products.forEach(i -> i.setProductCategory(this));
+        }
+        this.products = products;
     }
 
     public ProductCategory products(Set<Product> products) {
-        this.products = products;
+        this.setProducts(products);
         return this;
     }
 
@@ -91,9 +108,6 @@ public class ProductCategory implements Serializable {
         return this;
     }
 
-    public void setProducts(Set<Product> products) {
-        this.products = products;
-    }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here
 
     @Override
@@ -109,7 +123,8 @@ public class ProductCategory implements Serializable {
 
     @Override
     public int hashCode() {
-        return 31;
+        // see https://vladmihalcea.com/how-to-implement-equals-and-hashcode-using-the-jpa-entity-identifier/
+        return getClass().hashCode();
     }
 
     // prettier-ignore

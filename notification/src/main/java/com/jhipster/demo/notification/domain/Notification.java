@@ -1,14 +1,12 @@
 package com.jhipster.demo.notification.domain;
 
+import com.jhipster.demo.notification.domain.enumeration.NotificationType;
+import java.io.Serializable;
+import java.time.Instant;
+import javax.validation.constraints.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
-import javax.validation.constraints.*;
-
-import java.io.Serializable;
-import java.time.Instant;
-
-import com.jhipster.demo.notification.domain.enumeration.NotificationType;
 
 /**
  * A Notification.
@@ -45,8 +43,14 @@ public class Notification implements Serializable {
     private Long productId;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here
+
     public String getId() {
-        return id;
+        return this.id;
+    }
+
+    public Notification id(String id) {
+        this.setId(id);
+        return this;
     }
 
     public void setId(String id) {
@@ -54,11 +58,11 @@ public class Notification implements Serializable {
     }
 
     public Instant getDate() {
-        return date;
+        return this.date;
     }
 
     public Notification date(Instant date) {
-        this.date = date;
+        this.setDate(date);
         return this;
     }
 
@@ -67,11 +71,11 @@ public class Notification implements Serializable {
     }
 
     public String getDetails() {
-        return details;
+        return this.details;
     }
 
     public Notification details(String details) {
-        this.details = details;
+        this.setDetails(details);
         return this;
     }
 
@@ -80,11 +84,11 @@ public class Notification implements Serializable {
     }
 
     public Instant getSentDate() {
-        return sentDate;
+        return this.sentDate;
     }
 
     public Notification sentDate(Instant sentDate) {
-        this.sentDate = sentDate;
+        this.setSentDate(sentDate);
         return this;
     }
 
@@ -93,11 +97,11 @@ public class Notification implements Serializable {
     }
 
     public NotificationType getFormat() {
-        return format;
+        return this.format;
     }
 
     public Notification format(NotificationType format) {
-        this.format = format;
+        this.setFormat(format);
         return this;
     }
 
@@ -106,11 +110,11 @@ public class Notification implements Serializable {
     }
 
     public Long getUserId() {
-        return userId;
+        return this.userId;
     }
 
     public Notification userId(Long userId) {
-        this.userId = userId;
+        this.setUserId(userId);
         return this;
     }
 
@@ -119,17 +123,18 @@ public class Notification implements Serializable {
     }
 
     public Long getProductId() {
-        return productId;
+        return this.productId;
     }
 
     public Notification productId(Long productId) {
-        this.productId = productId;
+        this.setProductId(productId);
         return this;
     }
 
     public void setProductId(Long productId) {
         this.productId = productId;
     }
+
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here
 
     @Override
@@ -145,7 +150,8 @@ public class Notification implements Serializable {
 
     @Override
     public int hashCode() {
-        return 31;
+        // see https://vladmihalcea.com/how-to-implement-equals-and-hashcode-using-the-jpa-entity-identifier/
+        return getClass().hashCode();
     }
 
     // prettier-ignore

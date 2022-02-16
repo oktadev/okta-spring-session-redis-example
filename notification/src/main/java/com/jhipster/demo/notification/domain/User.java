@@ -1,21 +1,19 @@
 package com.jhipster.demo.notification.domain;
 
-import com.jhipster.demo.notification.config.Constants;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.Field;
-
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
+import com.jhipster.demo.notification.config.Constants;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 /**
  * A user.
@@ -59,7 +57,6 @@ public class User extends AbstractAuditingEntity implements Serializable {
 
     @JsonIgnore
     private Set<Authority> authorities = new HashSet<>();
-
 
     public String getId() {
         return id;
@@ -110,7 +107,7 @@ public class User extends AbstractAuditingEntity implements Serializable {
         this.imageUrl = imageUrl;
     }
 
-    public boolean getActivated() {
+    public boolean isActivated() {
         return activated;
     }
 
@@ -147,7 +144,8 @@ public class User extends AbstractAuditingEntity implements Serializable {
 
     @Override
     public int hashCode() {
-        return 31;
+        // see https://vladmihalcea.com/how-to-implement-equals-and-hashcode-using-the-jpa-entity-identifier/
+        return getClass().hashCode();
     }
 
     // prettier-ignore

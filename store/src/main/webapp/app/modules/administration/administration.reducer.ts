@@ -1,18 +1,8 @@
 import axios from 'axios';
+import { createAsyncThunk, createSlice, isPending, isRejected } from '@reduxjs/toolkit';
 
-import { REQUEST, SUCCESS, FAILURE } from 'app/shared/reducers/action-type.util';
-
-export const ACTION_TYPES = {
-  FETCH_GATEWAY_ROUTE: 'administration/FETCH_GATEWAY_ROUTE',
-  FETCH_LOGS: 'administration/FETCH_LOGS',
-  FETCH_LOGS_CHANGE_LEVEL: 'administration/FETCH_LOGS_CHANGE_LEVEL',
-  FETCH_HEALTH: 'administration/FETCH_HEALTH',
-  FETCH_METRICS: 'administration/FETCH_METRICS',
-  FETCH_THREAD_DUMP: 'administration/FETCH_THREAD_DUMP',
-  FETCH_CONFIGURATIONS: 'administration/FETCH_CONFIGURATIONS',
-  FETCH_ENV: 'administration/FETCH_ENV',
-  FETCH_AUDITS: 'administration/FETCH_AUDITS',
-};
+import { serializeAxiosError } from 'app/shared/reducers/reducer.utils';
+import { AppThunk } from 'app/config/store';
 
 const initialState = {
   loading: false,
@@ -30,163 +20,121 @@ const initialState = {
     configProps: {} as any,
     env: {} as any,
   },
-  audits: [] as any[],
   totalItems: 0,
 };
 
 export type AdministrationState = Readonly<typeof initialState>;
 
-// Reducer
+// Actions
+export const getGatewayRoutes = createAsyncThunk('administration/fetch_gateway_route', async () => axios.get<any>('api/gateway/routes'), {
+  serializeError: serializeAxiosError,
+});
 
-export default (state: AdministrationState = initialState, action): AdministrationState => {
-  switch (action.type) {
-    case REQUEST(ACTION_TYPES.FETCH_GATEWAY_ROUTE):
-    case REQUEST(ACTION_TYPES.FETCH_METRICS):
-    case REQUEST(ACTION_TYPES.FETCH_THREAD_DUMP):
-    case REQUEST(ACTION_TYPES.FETCH_LOGS):
-    case REQUEST(ACTION_TYPES.FETCH_CONFIGURATIONS):
-    case REQUEST(ACTION_TYPES.FETCH_ENV):
-    case REQUEST(ACTION_TYPES.FETCH_AUDITS):
-    case REQUEST(ACTION_TYPES.FETCH_HEALTH):
-      return {
-        ...state,
-        errorMessage: null,
-        loading: true,
+export const getSystemHealth = createAsyncThunk('administration/fetch_health', async () => axios.get<any>('management/health'), {
+  serializeError: serializeAxiosError,
+});
+
+export const getSystemMetrics = createAsyncThunk('administration/fetch_metrics', async () => axios.get<any>('management/jhimetrics'), {
+  serializeError: serializeAxiosError,
+});
+
+export const getSystemThreadDump = createAsyncThunk(
+  'administration/fetch_thread_dump',
+  async () => axios.get<any>('management/threaddump'),
+  {
+    serializeError: serializeAxiosError,
+  }
+);
+
+export const getLoggers = createAsyncThunk('administration/fetch_logs', async () => axios.get<any>('management/loggers'), {
+  serializeError: serializeAxiosError,
+});
+
+export const setLoggers = createAsyncThunk(
+  'administration/fetch_logs_change_level',
+  async ({ name, configuredLevel }: any) => axios.post(`management/loggers/${name}`, { configuredLevel }),
+  {
+    serializeError: serializeAxiosError,
+  }
+);
+
+export const changeLogLevel: (name, configuredLevel) => AppThunk = (name, configuredLevel) => async dispatch => {
+  await dispatch(setLoggers({ name, configuredLevel }));
+  dispatch(getLoggers());
+};
+
+export const getConfigurations = createAsyncThunk(
+  'administration/fetch_configurations',
+  async () => axios.get<any>('management/configprops'),
+  {
+    serializeError: serializeAxiosError,
+  }
+);
+
+export const getEnv = createAsyncThunk('administration/fetch_env', async () => axios.get<any>('management/env'), {
+  serializeError: serializeAxiosError,
+});
+
+export const AdministrationSlice = createSlice({
+  name: 'administration',
+  initialState: initialState as AdministrationState,
+  reducers: {},
+  extraReducers(builder) {
+    builder.addCase(getGatewayRoutes.fulfilled, (state, action) => {
+      state.loading = false;
+      state.gateway = {
+        routes: action.payload.data,
       };
-    case FAILURE(ACTION_TYPES.FETCH_GATEWAY_ROUTE):
-    case FAILURE(ACTION_TYPES.FETCH_METRICS):
-    case FAILURE(ACTION_TYPES.FETCH_THREAD_DUMP):
-    case FAILURE(ACTION_TYPES.FETCH_LOGS):
-    case FAILURE(ACTION_TYPES.FETCH_CONFIGURATIONS):
-    case FAILURE(ACTION_TYPES.FETCH_ENV):
-    case FAILURE(ACTION_TYPES.FETCH_AUDITS):
-    case FAILURE(ACTION_TYPES.FETCH_HEALTH):
-      return {
-        ...state,
-        loading: false,
-        errorMessage: action.payload,
-      };
-    case SUCCESS(ACTION_TYPES.FETCH_GATEWAY_ROUTE):
-      return {
-        ...state,
-        loading: false,
-        gateway: {
-          routes: action.payload.data,
-        },
-      };
-    case SUCCESS(ACTION_TYPES.FETCH_METRICS):
-      return {
-        ...state,
-        loading: false,
-        metrics: action.payload.data,
-      };
-    case SUCCESS(ACTION_TYPES.FETCH_THREAD_DUMP):
-      return {
-        ...state,
-        loading: false,
-        threadDump: action.payload.data,
-      };
-    case SUCCESS(ACTION_TYPES.FETCH_LOGS):
-      return {
-        ...state,
-        loading: false,
-        logs: {
+    });
+    builder
+      .addCase(getSystemHealth.fulfilled, (state, action) => {
+        state.loading = false;
+        state.health = action.payload.data;
+      })
+      .addCase(getSystemMetrics.fulfilled, (state, action) => {
+        state.loading = false;
+        state.metrics = action.payload.data;
+      })
+      .addCase(getSystemThreadDump.fulfilled, (state, action) => {
+        state.loading = false;
+        state.threadDump = action.payload.data;
+      })
+      .addCase(getLoggers.fulfilled, (state, action) => {
+        state.loading = false;
+        state.logs = {
           loggers: action.payload.data.loggers,
-        },
-      };
-    case SUCCESS(ACTION_TYPES.FETCH_CONFIGURATIONS):
-      return {
-        ...state,
-        loading: false,
-        configuration: {
+        };
+      })
+      .addCase(getConfigurations.fulfilled, (state, action) => {
+        state.loading = false;
+        state.configuration = {
           ...state.configuration,
           configProps: action.payload.data,
-        },
-      };
-    case SUCCESS(ACTION_TYPES.FETCH_ENV):
-      return {
-        ...state,
-        loading: false,
-        configuration: {
+        };
+      })
+      .addCase(getEnv.fulfilled, (state, action) => {
+        state.loading = false;
+        state.configuration = {
           ...state.configuration,
           env: action.payload.data,
-        },
-      };
-    case SUCCESS(ACTION_TYPES.FETCH_AUDITS):
-      return {
-        ...state,
-        loading: false,
-        audits: action.payload.data,
-        totalItems: parseInt(action.payload.headers['x-total-count'], 10),
-      };
-    case SUCCESS(ACTION_TYPES.FETCH_HEALTH):
-      return {
-        ...state,
-        loading: false,
-        health: action.payload.data,
-      };
-    default:
-      return state;
-  }
-};
-
-// Actions
-export const gatewayRoutes = () => ({
-  type: ACTION_TYPES.FETCH_GATEWAY_ROUTE,
-  payload: axios.get('api/gateway/routes'),
+        };
+      })
+      .addMatcher(
+        isPending(getGatewayRoutes, getSystemHealth, getSystemMetrics, getSystemThreadDump, getLoggers, getConfigurations, getEnv),
+        state => {
+          state.errorMessage = null;
+          state.loading = true;
+        }
+      )
+      .addMatcher(
+        isRejected(getGatewayRoutes, getSystemHealth, getSystemMetrics, getSystemThreadDump, getLoggers, getConfigurations, getEnv),
+        (state, action) => {
+          state.errorMessage = action.error.message;
+          state.loading = false;
+        }
+      );
+  },
 });
 
-export const systemHealth = () => ({
-  type: ACTION_TYPES.FETCH_HEALTH,
-  payload: axios.get('management/health'),
-});
-
-export const systemMetrics = () => ({
-  type: ACTION_TYPES.FETCH_METRICS,
-  payload: axios.get('management/jhimetrics'),
-});
-
-export const systemThreadDump = () => ({
-  type: ACTION_TYPES.FETCH_THREAD_DUMP,
-  payload: axios.get('management/threaddump'),
-});
-
-export const getLoggers = () => ({
-  type: ACTION_TYPES.FETCH_LOGS,
-  payload: axios.get('management/loggers'),
-});
-
-export const changeLogLevel: (name, configuredLevel) => void = (name, configuredLevel) => {
-  const body = { configuredLevel };
-  return async dispatch => {
-    await dispatch({
-      type: ACTION_TYPES.FETCH_LOGS_CHANGE_LEVEL,
-      payload: axios.post('management/loggers/' + name, body),
-    });
-    dispatch(getLoggers());
-  };
-};
-
-export const getConfigurations = () => ({
-  type: ACTION_TYPES.FETCH_CONFIGURATIONS,
-  payload: axios.get('management/configprops'),
-});
-
-export const getEnv = () => ({
-  type: ACTION_TYPES.FETCH_ENV,
-  payload: axios.get('management/env'),
-});
-
-export const getAudits = (page, size, sort, fromDate, toDate) => {
-  let requestUrl = `management/audits${sort ? `?page=${page}&size=${size}&sort=${sort}` : ''}`;
-  if (fromDate) {
-    requestUrl += `&fromDate=${fromDate}`;
-  }
-  if (toDate) {
-    requestUrl += `&toDate=${toDate}`;
-  }
-  return {
-    type: ACTION_TYPES.FETCH_AUDITS,
-    payload: axios.get(requestUrl),
-  };
-};
+// Reducer
+export default AdministrationSlice.reducer;

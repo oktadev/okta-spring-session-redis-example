@@ -1,25 +1,27 @@
-import React from 'react';
-import { connect } from 'react-redux';
+import React, { useEffect } from 'react';
 import { Translate } from 'react-jhipster';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Badge, Table, Button } from 'reactstrap';
 
-import { gatewayRoutes } from '../administration.reducer';
+import { useAppDispatch, useAppSelector } from 'app/config/store';
+import { getGatewayRoutes } from '../administration.reducer';
 
-export interface IGatewayPageProps extends StateProps, DispatchProps {}
+export const GatewayPage = () => {
+  const dispatch = useAppDispatch();
+  const isFetching = useAppSelector(state => state.administration.loading);
+  const routes = useAppSelector(state => state.administration.gateway.routes);
 
-export class GatewayPage extends React.Component<IGatewayPageProps> {
-  componentDidMount() {
-    this.props.gatewayRoutes();
-  }
+  useEffect(() => {
+    dispatch(getGatewayRoutes());
+  }, []);
 
-  metadata = instance => {
+  const metadata = instance => {
     const spans = [];
     Object.keys(instance).map((key, index) => {
       spans.push(
         <span key={key.toString() + 'value'}>
-          <Badge key={key.toString() + '-containerbadge'} className="font-weight-normal">
-            <Badge key={key.toString() + '-badge'} color="info" className="font-weight-normal" pill>
+          <Badge key={key.toString() + '-containerbadge'} className="fw-normal">
+            <Badge key={key.toString() + '-badge'} color="info" className="fw-normal" pill>
               {key}
             </Badge>
             {instance[key]}
@@ -30,7 +32,7 @@ export class GatewayPage extends React.Component<IGatewayPageProps> {
     return spans;
   };
 
-  badgeInfo = info => {
+  const badgeInfo = info => {
     if (info) {
       if (info.status === 'UP') {
         return <Badge color="success">{info.status}</Badge>;
@@ -42,7 +44,7 @@ export class GatewayPage extends React.Component<IGatewayPageProps> {
     }
   };
 
-  instanceInfo = route => {
+  const instanceInfo = route => {
     if (route) {
       return (
         <Table striped responsive>
@@ -54,8 +56,8 @@ export class GatewayPage extends React.Component<IGatewayPageProps> {
                     {instance.uri}
                   </a>
                 </td>
-                <td>{this.badgeInfo(instance.instanceInfo)}</td>
-                <td>{this.metadata(instance.metadata)}</td>
+                <td>{badgeInfo(instance.instanceInfo)}</td>
+                <td>{metadata(instance.metadata)}</td>
               </tr>
             ))}
           </tbody>
@@ -64,65 +66,51 @@ export class GatewayPage extends React.Component<IGatewayPageProps> {
     }
   };
 
-  gatewayRoutes = () => {
-    if (!this.props.isFetching) {
-      this.props.gatewayRoutes();
+  const gatewayRoutes = () => {
+    if (!isFetching) {
+      dispatch(getGatewayRoutes());
     }
   };
 
-  render() {
-    const { routes, isFetching } = this.props;
-    return (
-      <div>
-        <h2>Gateway</h2>
-        <p>
-          <Button onClick={this.gatewayRoutes} color={isFetching ? 'danger' : 'primary'} disabled={isFetching}>
-            <FontAwesomeIcon icon="sync" />
-            &nbsp;
-            <Translate component="span" contentKey="health.refresh.button">
-              Refresh
-            </Translate>
-          </Button>
-        </p>
+  return (
+    <div>
+      <h2>Gateway</h2>
+      <p>
+        <Button onClick={gatewayRoutes} color={isFetching ? 'danger' : 'primary'} disabled={isFetching}>
+          <FontAwesomeIcon icon="sync" />
+          &nbsp;
+          <Translate component="span" contentKey="health.refresh.button">
+            Refresh
+          </Translate>
+        </Button>
+      </p>
 
-        <Table striped responsive>
-          <thead>
-            <tr key="header">
-              <th>
-                <Translate contentKey="gateway.routes.url">URL</Translate>
-              </th>
-              <th>
-                <Translate contentKey="gateway.routes.service">Service</Translate>
-              </th>
-              <th>
-                <Translate contentKey="gateway.routes.servers">Available servers</Translate>
-              </th>
+      <Table striped responsive>
+        <thead>
+          <tr key="header">
+            <th>
+              <Translate contentKey="gateway.routes.url">URL</Translate>
+            </th>
+            <th>
+              <Translate contentKey="gateway.routes.service">Service</Translate>
+            </th>
+            <th>
+              <Translate contentKey="gateway.routes.servers">Available servers</Translate>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {routes.map((route, i) => (
+            <tr key={`routes-${i}`}>
+              <td>{route.path}</td>
+              <td>{route.serviceId}</td>
+              <td>{instanceInfo(route)}</td>
             </tr>
-          </thead>
-          <tbody>
-            {routes.map((route, i) => (
-              <tr key={`routes-${i}`}>
-                <td>{route.path}</td>
-                <td>{route.serviceId}</td>
-                <td>{this.instanceInfo(route)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      </div>
-    );
-  }
-}
+          ))}
+        </tbody>
+      </Table>
+    </div>
+  );
+};
 
-const mapStateToProps = storeState => ({
-  routes: storeState.administration.gateway.routes,
-  account: storeState.authentication.account,
-  isFetching: storeState.administration.loading,
-});
-
-const mapDispatchToProps = { gatewayRoutes };
-
-type StateProps = ReturnType<typeof mapStateToProps>;
-type DispatchProps = typeof mapDispatchToProps;
-
-export default connect(mapStateToProps, mapDispatchToProps)(GatewayPage);
+export default GatewayPage;

@@ -9,7 +9,7 @@ export interface ICustomer {
   email?: string;
   phone?: string;
   addressLine1?: string;
-  addressLine2?: string;
+  addressLine2?: string | null;
   city?: string;
   country?: string;
   user?: IUser;

@@ -3,6 +3,7 @@
     "productProductCategory": {
       "home": {
         "title": "Product Categories",
+        "refreshListLabel": "Refresh list",
         "createLabel": "Create a new Product Category",
         "createOrEditLabel": "Create or edit a Product Category",
         "notFound": "No Product Categories found"
@@ -13,6 +14,7 @@
       "detail": {
         "title": "Product Category"
       },
+      "id": "ID",
       "name": "Name",
       "description": "Description",
       "product": "Product"

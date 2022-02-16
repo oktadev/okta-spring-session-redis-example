@@ -1,77 +1,77 @@
 import React, { useState, useEffect } from 'react';
-import { connect } from 'react-redux';
 import { Link, RouteComponentProps } from 'react-router-dom';
-import { Button, Row, Col, Label } from 'reactstrap';
-import { AvFeedback, AvForm, AvGroup, AvInput, AvField } from 'availity-reactstrap-validation';
-import { Translate, translate, ICrudGetAction, ICrudGetAllAction, setFileData, openFile, byteSize, ICrudPutAction } from 'react-jhipster';
+import { Button, Row, Col, FormText } from 'reactstrap';
+import { isNumber, Translate, translate, ValidatedField, ValidatedForm, ValidatedBlobField } from 'react-jhipster';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { IRootState } from 'app/shared/reducers';
 
 import { IProductCategory } from 'app/shared/model/product/product-category.model';
 import { getEntities as getProductCategories } from 'app/entities/product/product-category/product-category.reducer';
-import { getEntity, updateEntity, createEntity, setBlob, reset } from './product.reducer';
+import { getEntity, updateEntity, createEntity, reset } from './product.reducer';
 import { IProduct } from 'app/shared/model/product/product.model';
 import { convertDateTimeFromServer, convertDateTimeToServer, displayDefaultDateTime } from 'app/shared/util/date-utils';
 import { mapIdList } from 'app/shared/util/entity-utils';
+import { useAppDispatch, useAppSelector } from 'app/config/store';
+import { Size } from 'app/shared/model/enumerations/size.model';
 
-export interface IProductUpdateProps extends StateProps, DispatchProps, RouteComponentProps<{ id: string }> {}
+export const ProductUpdate = (props: RouteComponentProps<{ id: string }>) => {
+  const dispatch = useAppDispatch();
 
-export const ProductUpdate = (props: IProductUpdateProps) => {
-  const [productCategoryId, setProductCategoryId] = useState('0');
-  const [isNew, setIsNew] = useState(!props.match.params || !props.match.params.id);
+  const [isNew] = useState(!props.match.params || !props.match.params.id);
 
-  const { productEntity, productCategories, loading, updating } = props;
-
-  const { image, imageContentType } = productEntity;
-
+  const productCategories = useAppSelector(state => state.productCategory.entities);
+  const productEntity = useAppSelector(state => state.product.entity);
+  const loading = useAppSelector(state => state.product.loading);
+  const updating = useAppSelector(state => state.product.updating);
+  const updateSuccess = useAppSelector(state => state.product.updateSuccess);
+  const sizeValues = Object.keys(Size);
   const handleClose = () => {
     props.history.push('/product' + props.location.search);
   };
 
   useEffect(() => {
     if (isNew) {
-      props.reset();
+      dispatch(reset());
     } else {
-      props.getEntity(props.match.params.id);
+      dispatch(getEntity(props.match.params.id));
     }
 
-    props.getProductCategories();
+    dispatch(getProductCategories({}));
   }, []);
 
-  const onBlobChange = (isAnImage, name) => event => {
-    setFileData(event, (contentType, data) => props.setBlob(name, data, contentType), isAnImage);
-  };
-
-  const clearBlob = name => () => {
-    props.setBlob(name, undefined, undefined);
-  };
-
   useEffect(() => {
-    if (props.updateSuccess) {
+    if (updateSuccess) {
       handleClose();
     }
-  }, [props.updateSuccess]);
+  }, [updateSuccess]);
 
-  const saveEntity = (event, errors, values) => {
-    if (errors.length === 0) {
-      const entity = {
-        ...productEntity,
-        ...values,
-      };
+  const saveEntity = values => {
+    const entity = {
+      ...productEntity,
+      ...values,
+      productCategory: productCategories.find(it => it.id.toString() === values.productCategory.toString()),
+    };
 
-      if (isNew) {
-        props.createEntity(entity);
-      } else {
-        props.updateEntity(entity);
-      }
+    if (isNew) {
+      dispatch(createEntity(entity));
+    } else {
+      dispatch(updateEntity(entity));
     }
   };
+
+  const defaultValues = () =>
+    isNew
+      ? {}
+      : {
+          productSize: 'S',
+          ...productEntity,
+          productCategory: productEntity?.productCategory?.id,
+        };
 
   return (
     <div>
       <Row className="justify-content-center">
         <Col md="8">
-          <h2 id="storeApp.productProduct.home.createOrEditLabel">
+          <h2 id="storeApp.productProduct.home.createOrEditLabel" data-cy="ProductCreateUpdateHeading">
             <Translate contentKey="storeApp.productProduct.home.createOrEditLabel">Create or edit a Product</Translate>
           </h2>
         </Col>
@@ -81,109 +81,84 @@ export const ProductUpdate = (props: IProductUpdateProps) => {
           {loading ? (
             <p>Loading...</p>
           ) : (
-            <AvForm model={isNew ? {} : productEntity} onSubmit={saveEntity}>
+            <ValidatedForm defaultValues={defaultValues()} onSubmit={saveEntity}>
               {!isNew ? (
-                <AvGroup>
-                  <Label for="product-id">
-                    <Translate contentKey="global.field.id">ID</Translate>
-                  </Label>
-                  <AvInput id="product-id" type="text" className="form-control" name="id" required readOnly />
-                </AvGroup>
+                <ValidatedField
+                  name="id"
+                  required
+                  readOnly
+                  id="product-id"
+                  label={translate('global.field.id')}
+                  validate={{ required: true }}
+                />
               ) : null}
-              <AvGroup>
-                <Label id="nameLabel" for="product-name">
-                  <Translate contentKey="storeApp.productProduct.name">Name</Translate>
-                </Label>
-                <AvField
-                  id="product-name"
-                  type="text"
-                  name="name"
-                  validate={{
-                    required: { value: true, errorMessage: translate('entity.validation.required') },
-                  }}
-                />
-              </AvGroup>
-              <AvGroup>
-                <Label id="descriptionLabel" for="product-description">
-                  <Translate contentKey="storeApp.productProduct.description">Description</Translate>
-                </Label>
-                <AvField id="product-description" type="text" name="description" />
-              </AvGroup>
-              <AvGroup>
-                <Label id="priceLabel" for="product-price">
-                  <Translate contentKey="storeApp.productProduct.price">Price</Translate>
-                </Label>
-                <AvField
-                  id="product-price"
-                  type="text"
-                  name="price"
-                  validate={{
-                    required: { value: true, errorMessage: translate('entity.validation.required') },
-                    min: { value: 0, errorMessage: translate('entity.validation.min', { min: 0 }) },
-                    number: { value: true, errorMessage: translate('entity.validation.number') },
-                  }}
-                />
-              </AvGroup>
-              <AvGroup>
-                <Label id="sizeLabel" for="product-size">
-                  <Translate contentKey="storeApp.productProduct.size">Size</Translate>
-                </Label>
-                <AvInput id="product-size" type="select" className="form-control" name="size" value={(!isNew && productEntity.size) || 'S'}>
-                  <option value="S">{translate('storeApp.Size.S')}</option>
-                  <option value="M">{translate('storeApp.Size.M')}</option>
-                  <option value="L">{translate('storeApp.Size.L')}</option>
-                  <option value="XL">{translate('storeApp.Size.XL')}</option>
-                  <option value="XXL">{translate('storeApp.Size.XXL')}</option>
-                </AvInput>
-              </AvGroup>
-              <AvGroup>
-                <AvGroup>
-                  <Label id="imageLabel" for="image">
-                    <Translate contentKey="storeApp.productProduct.image">Image</Translate>
-                  </Label>
-                  <br />
-                  {image ? (
-                    <div>
-                      {imageContentType ? (
-                        <a onClick={openFile(imageContentType, image)}>
-                          <img src={`data:${imageContentType};base64,${image}`} style={{ maxHeight: '100px' }} />
-                        </a>
-                      ) : null}
-                      <br />
-                      <Row>
-                        <Col md="11">
-                          <span>
-                            {imageContentType}, {byteSize(image)}
-                          </span>
-                        </Col>
-                        <Col md="1">
-                          <Button color="danger" onClick={clearBlob('image')}>
-                            <FontAwesomeIcon icon="times-circle" />
-                          </Button>
-                        </Col>
-                      </Row>
-                    </div>
-                  ) : null}
-                  <input id="file_image" type="file" onChange={onBlobChange(true, 'image')} accept="image/*" />
-                  <AvInput type="hidden" name="image" value={image} />
-                </AvGroup>
-              </AvGroup>
-              <AvGroup>
-                <Label for="product-productCategory">
-                  <Translate contentKey="storeApp.productProduct.productCategory">Product Category</Translate>
-                </Label>
-                <AvInput id="product-productCategory" type="select" className="form-control" name="productCategory.id">
-                  <option value="" key="0" />
-                  {productCategories
-                    ? productCategories.map(otherEntity => (
-                        <option value={otherEntity.id} key={otherEntity.id}>
-                          {otherEntity.name}
-                        </option>
-                      ))
-                    : null}
-                </AvInput>
-              </AvGroup>
-              <Button tag={Link} id="cancel-save" to="/product" replace color="info">
+              <ValidatedField
+                label={translate('storeApp.productProduct.name')}
+                id="product-name"
+                name="name"
+                data-cy="name"
+                type="text"
+                validate={{
+                  required: { value: true, message: translate('entity.validation.required') },
+                }}
+              />
+              <ValidatedField
+                label={translate('storeApp.productProduct.description')}
+                id="product-description"
+                name="description"
+                data-cy="description"
+                type="text"
+              />
+              <ValidatedField
+                label={translate('storeApp.productProduct.price')}
+                id="product-price"
+                name="price"
+                data-cy="price"
+                type="text"
+                validate={{
+                  required: { value: true, message: translate('entity.validation.required') },
+                  min: { value: 0, message: translate('entity.validation.min', { min: 0 }) },
+                  validate: v => isNumber(v) || translate('entity.validation.number'),
+                }}
+              />
+              <ValidatedField
+                label={translate('storeApp.productProduct.productSize')}
+                id="product-productSize"
+                name="productSize"
+                data-cy="productSize"
+                type="select"
+              >
+                {sizeValues.map(size => (
+                  <option value={size} key={size}>
+                    {translate('storeApp.Size.' + size)}
+                  </option>
+                ))}
+              </ValidatedField>
+              <ValidatedBlobField
+                label={translate('storeApp.productProduct.image')}
+                id="product-image"
+                name="image"
+                data-cy="image"
+                isImage
+                accept="image/*"
+              />
+              <ValidatedField
+                id="product-productCategory"
+                name="productCategory"
+                data-cy="productCategory"
+                label={translate('storeApp.productProduct.productCategory')}
+                type="select"
+              >
+                <option value="" key="0" />
+                {productCategories
+                  ? productCategories.map(otherEntity => (
+                      <option value={otherEntity.id} key={otherEntity.id}>
+                        {otherEntity.name}
+                      </option>
+                    ))
+                  : null}
+              </ValidatedField>
+              <Button tag={Link} id="cancel-save" data-cy="entityCreateCancelButton" to="/product" replace color="info">
                 <FontAwesomeIcon icon="arrow-left" />
                 &nbsp;
                 <span className="d-none d-md-inline">
@@ -191,12 +166,12 @@ export const ProductUpdate = (props: IProductUpdateProps) => {
                 </span>
               </Button>
               &nbsp;
-              <Button color="primary" id="save-entity" type="submit" disabled={updating}>
+              <Button color="primary" id="save-entity" data-cy="entityCreateSaveButton" type="submit" disabled={updating}>
                 <FontAwesomeIcon icon="save" />
                 &nbsp;
                 <Translate contentKey="entity.action.save">Save</Translate>
               </Button>
-            </AvForm>
+            </ValidatedForm>
           )}
         </Col>
       </Row>
@@ -204,24 +179,4 @@ export const ProductUpdate = (props: IProductUpdateProps) => {
   );
 };
 
-const mapStateToProps = (storeState: IRootState) => ({
-  productCategories: storeState.productCategory.entities,
-  productEntity: storeState.product.entity,
-  loading: storeState.product.loading,
-  updating: storeState.product.updating,
-  updateSuccess: storeState.product.updateSuccess,
-});
-
-const mapDispatchToProps = {
-  getProductCategories,
-  getEntity,
-  updateEntity,
-  setBlob,
-  createEntity,
-  reset,
-};
-
-type StateProps = ReturnType<typeof mapStateToProps>;
-type DispatchProps = typeof mapDispatchToProps;
-
-export default connect(mapStateToProps, mapDispatchToProps)(ProductUpdate);
+export default ProductUpdate;

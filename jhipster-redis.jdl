@@ -1,38 +1,36 @@
-
-
 /*
  * This is a microservice e-commerce store sample with Gateway and three microservice applications
- * This uses JHipster registry for service discovery and JWT authentication
+ * This uses JHipster registry for service discovery and OAuth 2.0 authentication
  */
- 
+
 application {
   config {
-    baseName store,
-    applicationType gateway,
-    packageName com.jhipster.demo.store,
-    serviceDiscoveryType eureka,
-    authenticationType oauth2,
-    prodDatabaseType mysql,
-    cacheProvider hazelcast,
-    buildTool maven,
-    clientFramework react,
-    useSass true,
-    testFrameworks [protractor]
+    baseName store
+    applicationType gateway
+    packageName com.jhipster.demo.store
+    serviceDiscoveryType eureka
+    authenticationType oauth2
+    prodDatabaseType mysql
+    cacheProvider no
+    buildTool maven
+    clientFramework react
+    testFrameworks [cypress]
+    reactive true
   }
   entities *
 }
 
 application {
   config {
-    baseName product,
-    applicationType microservice,
-    packageName com.jhipster.demo.product,
-    serviceDiscoveryType eureka,
-    authenticationType oauth2,
-    prodDatabaseType mysql,
-    cacheProvider hazelcast,
-    buildTool maven,
-    serverPort 8081,
+    baseName product
+    applicationType microservice
+    packageName com.jhipster.demo.product
+    serviceDiscoveryType eureka
+    authenticationType oauth2
+    prodDatabaseType mysql
+    cacheProvider hazelcast
+    buildTool maven
+    serverPort 8081
     skipUserManagement true
   }
   entities Product, ProductCategory, ProductOrder, OrderItem
@@ -40,14 +38,14 @@ application {
 
 application {
   config {
-    baseName invoice,
-    applicationType microservice,
-    packageName com.jhipster.demo.invoice,
-    serviceDiscoveryType eureka,
-    authenticationType oauth2,
-    prodDatabaseType mysql,
-    buildTool maven,
-    serverPort 8082,
+    baseName invoice
+    applicationType microservice
+    packageName com.jhipster.demo.invoice
+    serviceDiscoveryType eureka
+    authenticationType oauth2
+    prodDatabaseType mysql
+    buildTool maven
+    serverPort 8082
     skipUserManagement true
   }
   entities Invoice, Shipment
@@ -55,18 +53,18 @@ application {
 
 application {
   config {
-    baseName notification,
-    applicationType microservice,
-    packageName com.jhipster.demo.notification,
-    serviceDiscoveryType eureka,
-    authenticationType oauth2,
-    databaseType mongodb,
-    prodDatabaseType mongodb,
-    devDatabaseType mongodb,
-    cacheProvider no,
-    enableHibernateCache false,
-    buildTool maven,
-    serverPort 8083,
+    baseName notification
+    applicationType microservice
+    packageName com.jhipster.demo.notification
+    serviceDiscoveryType eureka
+    authenticationType oauth2
+    databaseType mongodb
+    prodDatabaseType mongodb
+    devDatabaseType mongodb
+    cacheProvider no
+    enableHibernateCache false
+    buildTool maven
+    serverPort 8083
     skipUserManagement true
   }
   entities Notification
@@ -102,7 +100,7 @@ entity Product {
     name String required
     description String
     price BigDecimal required min(0)
-    size Size required
+    productSize Size required
     image ImageBlob
 }
 
@@ -142,7 +140,7 @@ relationship ManyToOne {
 }
 
 relationship OneToMany {
-   ProductOrder{orderItem} to OrderItem{order(code) required} ,
+   ProductOrder{orderItem} to OrderItem{order(code) required}
    ProductCategory{product} to Product{productCategory(name)}
 }
 

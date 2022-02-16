@@ -1,21 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { connect } from 'react-redux';
 import { Table, Input, Row, Col, Badge } from 'reactstrap';
 import { Translate } from 'react-jhipster';
 
 import { getConfigurations, getEnv } from '../administration.reducer';
-import { IRootState } from 'app/shared/reducers';
+import { useAppDispatch, useAppSelector } from 'app/config/store';
 
-export interface IConfigurationPageProps extends StateProps, DispatchProps {}
-
-export const ConfigurationPage = (props: IConfigurationPageProps) => {
+export const ConfigurationPage = () => {
   const [filter, setFilter] = useState('');
   const [reversePrefix, setReversePrefix] = useState(false);
   const [reverseProperties, setReverseProperties] = useState(false);
+  const dispatch = useAppDispatch();
+
+  const configuration = useAppSelector(state => state.administration.configuration);
 
   useEffect(() => {
-    props.getConfigurations();
-    props.getEnv();
+    dispatch(getConfigurations());
+    dispatch(getEnv());
   }, []);
 
   const changeFilter = evt => setFilter(evt.target.value);
@@ -33,15 +33,13 @@ export const ConfigurationPage = (props: IConfigurationPageProps) => {
       .map((v: any) => v.beans)
       .reduce((acc, e) => ({ ...acc, ...e }));
 
-  const { configuration } = props;
+  const configProps = configuration?.configProps ?? {};
 
-  const configProps = configuration && configuration.configProps ? configuration.configProps : {};
-
-  const env = configuration && configuration.env ? configuration.env : {};
+  const env = configuration?.env ?? {};
 
   return (
     <div>
-      <h2 id="configuration-page-heading">
+      <h2 id="configuration-page-heading" data-cy="configurationPageHeading">
         <Translate contentKey="configuration.title">Configuration</Translate>
       </h2>
       <span>
@@ -72,7 +70,7 @@ export const ConfigurationPage = (props: IConfigurationPageProps) => {
                         <Row key={index}>
                           <Col md="4">{propKey}</Col>
                           <Col md="8">
-                            <Badge className="float-right badge-secondary break">{JSON.stringify(property['properties'][propKey])}</Badge>
+                            <Badge className="float-end bg-secondary break">{JSON.stringify(property['properties'][propKey])}</Badge>
                           </Col>
                         </Row>
                       ))}
@@ -102,7 +100,7 @@ export const ConfigurationPage = (props: IConfigurationPageProps) => {
                       <tr key={propIndex}>
                         <td className="break">{propKey}</td>
                         <td className="break">
-                          <span className="float-right badge badge-secondary break">{envKey.properties[propKey].value}</span>
+                          <span className="float-end badge bg-secondary break">{envKey.properties[propKey].value}</span>
                         </td>
                       </tr>
                     ))}
@@ -115,14 +113,4 @@ export const ConfigurationPage = (props: IConfigurationPageProps) => {
   );
 };
 
-const mapStateToProps = ({ administration }: IRootState) => ({
-  configuration: administration.configuration,
-  isFetching: administration.loading,
-});
-
-const mapDispatchToProps = { getConfigurations, getEnv };
-
-type StateProps = ReturnType<typeof mapStateToProps>;
-type DispatchProps = typeof mapDispatchToProps;
-
-export default connect(mapStateToProps, mapDispatchToProps)(ConfigurationPage);
+export default ConfigurationPage;

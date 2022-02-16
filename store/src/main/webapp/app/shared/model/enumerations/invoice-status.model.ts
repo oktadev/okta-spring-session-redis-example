@@ -1,4 +1,4 @@
-export const enum InvoiceStatus {
+export enum InvoiceStatus {
   PAID = 'PAID',
 
   ISSUED = 'ISSUED',

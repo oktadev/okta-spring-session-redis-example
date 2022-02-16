@@ -1,4 +1,4 @@
 /**
- * MongoDB database migrations using MongoBee.
+ * MongoDB database migrations using Mongock.
  */
 package com.jhipster.demo.notification.config.dbmigrations;
