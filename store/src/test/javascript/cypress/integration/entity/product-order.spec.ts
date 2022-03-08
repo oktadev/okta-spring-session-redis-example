@@ -17,7 +17,7 @@ describe('ProductOrder e2e test', () => {
   const username = Cypress.env('E2E_USERNAME') ?? 'user';
   const password = Cypress.env('E2E_PASSWORD') ?? 'user';
   const productOrderSample = {
-    placedDate: '2022-02-15T01:35:10.417Z',
+    placedDate: '2022-03-03T06:04:15.417Z',
     status: 'PENDING',
     code: 'Account Niger',
     customer: 'stable value-added bandwidth',
@@ -158,7 +158,7 @@ describe('ProductOrder e2e test', () => {
     });
 
     it('should create an instance of ProductOrder', () => {
-      cy.get(`[data-cy="placedDate"]`).type('2022-02-15T18:52').should('have.value', '2022-02-15T18:52');
+      cy.get(`[data-cy="placedDate"]`).type('2022-03-03T23:22').should('have.value', '2022-03-03T23:22');
 
       cy.get(`[data-cy="status"]`).select('PENDING');
 

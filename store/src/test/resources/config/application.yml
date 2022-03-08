@@ -30,6 +30,8 @@ spring:
     exclude:
       - org.springframework.cloud.gateway.config.GatewayMetricsAutoConfiguration
       - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+  session:
+    store-type: none
   cloud:
     config:
       enabled: false
@@ -70,8 +72,6 @@ spring:
         provider:
           oidc:
             issuer-uri: http://DO_NOT_CALL:9080/auth/realms/jhipster
-  session:
-    store-type: none
 
 server:
   port: 10344

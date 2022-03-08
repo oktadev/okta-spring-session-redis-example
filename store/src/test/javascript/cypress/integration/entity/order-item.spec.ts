@@ -47,7 +47,7 @@ describe('OrderItem e2e test', () => {
       method: 'POST',
       url: '/services/product/api/product-orders',
       body: {
-        placedDate: '2022-02-15T15:50:01.355Z',
+        placedDate: '2022-03-03T20:19:06.355Z',
         status: 'COMPLETED',
         code: 'Organized Computers copying',
         invoiceId: 64936,

@@ -5,7 +5,7 @@ This repository contains all the code for using Spring Session + Redis in a JHip
 **Prerequisites:**
 
 - [Java 11](https://adoptopenjdk.net/)
-- [JHipster 7.6.0](https://www.jhipster.tech/installation/)
+- [JHipster 7.7.0](https://www.jhipster.tech/installation/)
 - [Docker](https://docs.docker.com/get-docker/)
 - [Docker Compose](https://docs.docker.com/compose/install/)
 - [Okta CLI](https://github.com/okta/okta-cli)
@@ -71,26 +71,26 @@ Run the services with Docker Compose:
 
 ```shell
 cd docker-compose
-docker-compose up
+docker compose up
 ```
 
 The JHipster registry will log the following message once it is ready:
 
 ```
-...  | 2022-02-16 00:48:23.512  INFO 1 --- [           main] t.jhipster.registry.JHipsterRegistryApp  :
-...  | ----------------------------------------------------------
-...  | 	Application 'jhipster-registry' is running! Access URLs:
-...  | 	Local: 		http://localhost:8761/
-...  | 	External: 	http://172.19.0.11:8761/
-...  | 	Profile(s): 	[composite, dev, api-docs, oauth2]
-...  | ----------------------------------------------------------
-...  | 2022-02-16 00:48:23.513  INFO 1 --- [           main] t.jhipster.registry.JHipsterRegistryApp  :
-...  | ----------------------------------------------------------
-...  | 	Config Server: 	Connected to the JHipster Registry running in Docker
-...  | ----------------------------------------------------------
+... | 2022-03-08 17:44:26.245  INFO 1 --- [           main] t.jhipster.registry.JHipsterRegistryApp  :
+... | ----------------------------------------------------------
+... | 	Application 'jhipster-registry' is running! Access URLs:
+... | 	Local: 		http://localhost:8761/
+... | 	External: 	http://172.19.0.11:8761/
+... | 	Profile(s): 	[composite, dev, api-docs, oauth2]
+... | ----------------------------------------------------------
+... | 2022-03-08 17:44:26.246  INFO 1 --- [           main] t.jhipster.registry.JHipsterRegistryApp  :
+... | ----------------------------------------------------------
+... | 	Config Server: 	Connected to the JHipster Registry running in Docker
+... | ----------------------------------------------------------
 ```
 
-You can sign in to `http://localhost:8761/` with the JHipster admin user and password, to check if all services are up.
+You can sign in to `http://localhost:8761/` to check if all services are up.
 
 Once all services are up, access the store at `http://localhost:8080` and sign in with your Okta credentials.
 

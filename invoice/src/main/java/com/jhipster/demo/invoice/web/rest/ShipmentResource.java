@@ -142,12 +142,21 @@ public class ShipmentResource {
      * {@code GET  /shipments} : get all the shipments.
      *
      * @param pageable the pagination information.
+     * @param eagerload flag to eager load entities from relationships (This is applicable for many-to-many).
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of shipments in body.
      */
     @GetMapping("/shipments")
-    public ResponseEntity<List<Shipment>> getAllShipments(@org.springdoc.api.annotations.ParameterObject Pageable pageable) {
+    public ResponseEntity<List<Shipment>> getAllShipments(
+        @org.springdoc.api.annotations.ParameterObject Pageable pageable,
+        @RequestParam(required = false, defaultValue = "true") boolean eagerload
+    ) {
         log.debug("REST request to get a page of Shipments");
-        Page<Shipment> page = shipmentService.findAll(pageable);
+        Page<Shipment> page;
+        if (eagerload) {
+            page = shipmentService.findAllWithEagerRelationships(pageable);
+        } else {
+            page = shipmentService.findAll(pageable);
+        }
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return ResponseEntity.ok().headers(headers).body(page.getContent());
     }

@@ -17,6 +17,15 @@ import reactor.core.publisher.Mono;
 public interface CustomerRepository extends ReactiveCrudRepository<Customer, Long>, CustomerRepositoryInternal {
     Flux<Customer> findAllBy(Pageable pageable);
 
+    @Override
+    Mono<Customer> findOneWithEagerRelationships(Long id);
+
+    @Override
+    Flux<Customer> findAllWithEagerRelationships();
+
+    @Override
+    Flux<Customer> findAllWithEagerRelationships(Pageable page);
+
     @Query("SELECT * FROM customer entity WHERE entity.user_id = :id")
     Flux<Customer> findByUser(Long id);
 
@@ -46,4 +55,12 @@ interface CustomerRepositoryInternal {
     Mono<Customer> findById(Long id);
 
     Flux<Customer> findAllBy(Pageable pageable, Criteria criteria);
+
+    Mono<Customer> findOneWithEagerRelationships(Long id);
+
+    Flux<Customer> findAllWithEagerRelationships();
+
+    Flux<Customer> findAllWithEagerRelationships(Pageable page);
+
+    Mono<Void> deleteById(Long id);
 }

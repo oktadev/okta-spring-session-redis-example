@@ -94,6 +94,15 @@ public class CustomerService {
     }
 
     /**
+     * Get all the customers with eager load of many-to-many relationships.
+     *
+     * @return the list of entities.
+     */
+    public Flux<Customer> findAllWithEagerRelationships(Pageable pageable) {
+        return customerRepository.findAllWithEagerRelationships(pageable);
+    }
+
+    /**
      * Returns the number of customers available.
      * @return the number of entities in the database.
      *
@@ -111,7 +120,7 @@ public class CustomerService {
     @Transactional(readOnly = true)
     public Mono<Customer> findOne(Long id) {
         log.debug("Request to get Customer : {}", id);
-        return customerRepository.findById(id);
+        return customerRepository.findOneWithEagerRelationships(id);
     }
 
     /**

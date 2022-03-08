@@ -4,14 +4,14 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.6.xsd">
     <!--
-        Added the constraints for entity Shipment.
+        Added the constraints for entity Customer.
     -->
-    <changeSet id="20220216003435-2" author="jhipster">
+    <changeSet id="20220304050640-2" author="jhipster">
 
-        <addForeignKeyConstraint baseColumnNames="invoice_id"
-                                 baseTableName="shipment"
-                                 constraintName="fk_shipment__invoice_id"
+        <addForeignKeyConstraint baseColumnNames="user_id"
+                                 baseTableName="customer"
+                                 constraintName="fk_customer__user_id"
                                  referencedColumnNames="id"
-                                 referencedTableName="invoice"/>
+                                 referencedTableName="jhi_user"/>
     </changeSet>
 </databaseChangeLog>

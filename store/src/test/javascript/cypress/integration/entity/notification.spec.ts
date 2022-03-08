@@ -17,8 +17,8 @@ describe('Notification e2e test', () => {
   const username = Cypress.env('E2E_USERNAME') ?? 'user';
   const password = Cypress.env('E2E_PASSWORD') ?? 'user';
   const notificationSample = {
-    date: '2022-02-15T16:20:14.480Z',
-    sentDate: '2022-02-15T08:33:17.824Z',
+    date: '2022-03-03T20:49:19.480Z',
+    sentDate: '2022-03-03T13:02:22.824Z',
     format: 'PARCEL',
     userId: 94565,
     productId: 69326,
@@ -156,11 +156,11 @@ describe('Notification e2e test', () => {
     });
 
     it('should create an instance of Notification', () => {
-      cy.get(`[data-cy="date"]`).type('2022-02-15T00:38').should('have.value', '2022-02-15T00:38');
+      cy.get(`[data-cy="date"]`).type('2022-03-03T05:07').should('have.value', '2022-03-03T05:07');
 
       cy.get(`[data-cy="details"]`).type('calculate').should('have.value', 'calculate');
 
-      cy.get(`[data-cy="sentDate"]`).type('2022-02-15T00:42').should('have.value', '2022-02-15T00:42');
+      cy.get(`[data-cy="sentDate"]`).type('2022-03-03T05:11').should('have.value', '2022-03-03T05:11');
 
       cy.get(`[data-cy="format"]`).select('SMS');
 

@@ -16,7 +16,7 @@ describe('Shipment e2e test', () => {
   const shipmentPageUrlPattern = new RegExp('/shipment(\\?.*)?$');
   const username = Cypress.env('E2E_USERNAME') ?? 'user';
   const password = Cypress.env('E2E_PASSWORD') ?? 'user';
-  const shipmentSample = { date: '2022-02-15T09:43:58.621Z' };
+  const shipmentSample = { date: '2022-03-03T14:13:03.621Z' };
 
   let shipment: any;
   let invoice: any;
@@ -32,11 +32,11 @@ describe('Shipment e2e test', () => {
       url: '/services/invoice/api/invoices',
       body: {
         code: 'generation',
-        date: '2022-02-15T15:08:56.046Z',
+        date: '2022-03-03T19:38:01.046Z',
         details: 'Associate',
         status: 'PAID',
         paymentMethod: 'PAYPAL',
-        paymentDate: '2022-02-15T08:35:11.870Z',
+        paymentDate: '2022-03-03T13:04:16.870Z',
         paymentAmount: 13982,
       },
     }).then(({ body }) => {
@@ -197,7 +197,7 @@ describe('Shipment e2e test', () => {
     it('should create an instance of Shipment', () => {
       cy.get(`[data-cy="trackingCode"]`).type('Borders Intelligent pixel').should('have.value', 'Borders Intelligent pixel');
 
-      cy.get(`[data-cy="date"]`).type('2022-02-15T14:13').should('have.value', '2022-02-15T14:13');
+      cy.get(`[data-cy="date"]`).type('2022-03-03T18:42').should('have.value', '2022-03-03T18:42');
 
       cy.get(`[data-cy="details"]`).type('Keys index').should('have.value', 'Keys index');
 

@@ -102,6 +102,21 @@ class CustomerRepositoryInternalImpl extends SimpleR2dbcRepository<Customer, Lon
         return createQuery(null, where(EntityManager.ENTITY_ALIAS + ".id").is(id)).one();
     }
 
+    @Override
+    public Mono<Customer> findOneWithEagerRelationships(Long id) {
+        return findById(id);
+    }
+
+    @Override
+    public Flux<Customer> findAllWithEagerRelationships() {
+        return findAll();
+    }
+
+    @Override
+    public Flux<Customer> findAllWithEagerRelationships(Pageable page) {
+        return findAllBy(page);
+    }
+
     private Customer process(Row row, RowMetadata metadata) {
         Customer entity = customerMapper.apply(row, "e");
         entity.setUser(userMapper.apply(row, "user"));

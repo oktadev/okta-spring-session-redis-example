@@ -18,10 +18,10 @@ describe('Invoice e2e test', () => {
   const password = Cypress.env('E2E_PASSWORD') ?? 'user';
   const invoiceSample = {
     code: 'microchip',
-    date: '2022-02-15T02:05:41.017Z',
+    date: '2022-03-03T06:34:46.017Z',
     status: 'PAID',
     paymentMethod: 'CASH_ON_DELIVERY',
-    paymentDate: '2022-02-15T04:21:08.769Z',
+    paymentDate: '2022-03-03T08:50:13.769Z',
     paymentAmount: 43049,
   };
 
@@ -162,7 +162,7 @@ describe('Invoice e2e test', () => {
     it('should create an instance of Invoice', () => {
       cy.get(`[data-cy="code"]`).type('Universal Central').should('have.value', 'Universal Central');
 
-      cy.get(`[data-cy="date"]`).type('2022-02-15T09:19').should('have.value', '2022-02-15T09:19');
+      cy.get(`[data-cy="date"]`).type('2022-03-03T13:48').should('have.value', '2022-03-03T13:48');
 
       cy.get(`[data-cy="details"]`).type('Knoll').should('have.value', 'Knoll');
 
@@ -170,7 +170,7 @@ describe('Invoice e2e test', () => {
 
       cy.get(`[data-cy="paymentMethod"]`).select('PAYPAL');
 
-      cy.get(`[data-cy="paymentDate"]`).type('2022-02-15T02:47').should('have.value', '2022-02-15T02:47');
+      cy.get(`[data-cy="paymentDate"]`).type('2022-03-03T07:16').should('have.value', '2022-03-03T07:16');
 
       cy.get(`[data-cy="paymentAmount"]`).type('85705').should('have.value', '85705');
 

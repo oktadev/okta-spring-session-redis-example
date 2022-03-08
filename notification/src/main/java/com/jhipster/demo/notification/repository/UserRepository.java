@@ -3,8 +3,7 @@ package com.jhipster.demo.notification.repository;
 import com.jhipster.demo.notification.domain.User;
 import java.util.List;
 import java.util.Optional;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
