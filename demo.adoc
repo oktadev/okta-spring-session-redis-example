@@ -1,0 +1,357 @@
+:experimental:
+:commandkey: &#8984;
+:toc: macro
+:source-highlighter: highlight.js
+
+= Spring Session and Redis Demo Steps
+
+In this demo, I'll show you how to configure a Spring Boot application to store sessions in Redis with Spring Session. The session will be shared among multiple nodes and preserved when a node failure happens.
+
+**Prerequisites**:
+
+- https://adoptopenjdk.net/[Java 11]
+- https://www.jhipster.tech/installation/[JHipster 7.7.0]
+- https://docs.docker.com/get-docker/[Docker Desktop]
+- https://github.com/okta/okta-cli[Okta CLI 0.10.0+]
+
+toc::[]
+
+== Build a Microservices Architecture with Spring Session and Redis
+
+. Install JHipster:
+
+  npm install -g generator-jhipster@7.7.0
+
+. For this tutorial, you can use the JDL sample https://github.com/jhipster/jdl-samples/blob/main/microservice-ecommerce-store-4-apps.jdl[`microservice-ecommerce-store-4-apps`] from the JDL samples repository.
+
+. Create a folder for the project:
++
+----
+mkdir spring-session-redis
+cd spring-session-redis
+----
++
+TIP: If you're using https://ohmyz.sh/[Oh My Zsh], you can run `take spring-session-redis` as an alternative.
+
+. Copy `microservice-ecommerce-store-4-apps.jdl` to the project folder and rename it to `jhipster-redis.jdl`.
++
+----
+wget https://raw.githubusercontent.com/jhipster/jdl-samples/main/microservice-ecommerce-store-4-apps.jdl -O jhipster-redis.jdl
+----
+
+. Update the `store`, `product`, `invoice`, and `notification` configs to use OAuth 2.0 / OIDC for authentication and Maven as the build tool:
++
+----
+application {
+  config {
+    ...
+    authenticationType oauth2,
+    buildTool maven,
+    ...
+  }
+}
+----
+
+. Run the `jdl` command:
++
+----
+jhipster jdl jhipster-redis.jdl
+----
+
+. Create the Docker Compose configuration for all the applications using JHipster's `docker-compose` sub-generator.
++
+----
+take docker-compose
+jhipster docker-compose
+----
+
+. You will see the following WARNING:
++
+----
+WARNING! Docker Compose configuration generated, but no Jib cache found
+----
+
+. This means the application images have yet to be built. Go through each application folder and build the images with Maven:
++
+----
+./mvnw -ntp -Pprod verify jib:dockerBuild
+----
+
+The architecture you generated uses OAuth 2.0 for authorization and OpenID Connect (OIDC) for authentication. By default, it's configured to work with Keycloak in a Docker container. It's also quite easy to make it work with an Okta developer account.
+
+== Add Authentication with OpenID Connect
+
+. In a terminal, navigate into the `docker-compose` directory and create an OIDC app on Okta.
+
+  okta apps create jhipster
+
+. Edit the file `docker-compose/docker-compose.yml` and override the default OAuth 2.0 settings for the services `invoice`, `notification`, `product`, and `store` with the following values:
++
+[source,yaml]
+----
+- SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_OIDC_ISSUER_URI=${OKTA_OAUTH2_ISSUER}
+- SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_CLIENT_ID=${OKTA_OAUTH2_CLIENT_ID}
+- SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_OIDC_CLIENT_SECRET=${OKTA_OAUTH2_CLIENT_SECRET}
+----
+
+. Create a `docker-compose/.env` file and set the value of the `OKTA_OAUTH_*` environment variables for Docker Compose, copying the values from `.okta.env`:
++
+----
+OKTA_OAUTH2_ISSUER=https://{yourOktaDomain}/oauth2/default
+OKTA_OAUTH2_CLIENT_ID={clientId}
+OKTA_OAUTH2_CLIENT_SECRET={clientSecret}
+----
++
+TIP: You can also set the OAuth 2.0 configuration for all the applications in a single place. See https://developer.okta.com/blog/2019/05/23/java-microservices-spring-cloud-config[Java Microservices with Spring Cloud Config and JHipster] for more information.
+
+. Run the services with Docker Compose:
++
+----
+docker compose up
+----
+
+. Sign in to the JHipster Registry at `http://localhost:8761` to check if all services are up.
+
+. Once all services are up, access the store at `http://localhost:8080` and sign in with your Okta user:
+
+== Configure Spring Session and Redis
+
+The `store` application maintains a user session in memory, identified with a session ID that is sent in a cookie to the client. If the store instance crashes, the session is lost. One way to avoid losing the session is by adding Spring Session with Redis for the session storage and sharing among `store` nodes.
+
+. Before making the modifications to the `store` application, stop all services with kbd:[Ctrl + C] and remove the containers:
++
+----
+cd docker-compose
+docker compose down
+----
+
+. Delete the store image:
++
+----
+docker rmi store --force
+----
+
+. Edit `store/pom.xml` and add the Spring Session + Redis dependencies:
++
+[source,xml]
+----
+<dependency>
+    <groupId>org.springframework.session</groupId>
+    <artifactId>spring-session-data-redis</artifactId>
+</dependency>
+<dependency>
+    <groupId>io.lettuce</groupId>
+    <artifactId>lettuce-core</artifactId>
+    <version>6.1.6.RELEASE</version>
+</dependency>
+----
++
+Spring Data Redis does not pull any client by default, hence the Lettuce dependency.
+
+. To enable Redis for your Spring profiles, add the following configuration to `store/src/main/resources/config/application-dev.yml` and `store/src/main/resources/config/application-prod.yml`:
++
+[source,yaml]
+----
+spring:
+  ...
+  session:
+    store-type: redis
+----
+
+. Disable Redis in the store's test configuration, so the existing tests don't require a Redis instance. Edit `src/test/resources/config/application.yml` and add the following:
++
+[source,yaml]
+----
+spring:
+  ...
+  autoconfigure:
+    exclude:
+      ...
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+  session:
+    store-type: none
+----
+
+. Rebuild the `store` application image:
++
+----
+cd ../store
+./mvnw -ntp -Pprod verify jib:dockerBuild
+----
+
+. Edit `docker-compose/docker-compose.yml` to set the Redis configuration. Under the `store` service entry, add the following variables to the environment:
++
+[source,yaml]
+----
+- LOGGING_LEVEL_COM_JHIPSTER_DEMO_STORE=TRACE
+- SPRING_REDIS_HOST=store-redis
+- SPRING_REDIS_PASSWORD=password
+- SPRING_REDIS_PORT=6379
+----
+
+. Add the `store-redis` instance as a new service (at the bottom of the file, and indent two spaces):
++
+[source,yaml]
+----
+store-redis:
+  image: 'redis:6.2'
+  command: redis-server --requirepass password
+  ports:
+    - '6379:6379'
+----
+
+. Run the service again with Docker Compose:
++
+----
+cd ../docker-compose
+docker compose up
+----
+
+. Once all services are up, sign in to the `store` application with your Okta account. Then, confirm Redis has stored new session keys:
++
+----
+docker exec docker-compose-store-redis-1 redis-cli -a password KEYS \*
+----
++
+The output should look like this:
++
+----
+spring:session:sessions:0847fe57-fe63-40b4-8e86-40f000844280
+----
+
+== Spring Session Redis with HAProxy Load Balancing
+
+To test session sharing among multiple `store` nodes, you need load balancing for the `store` service. You can do this by running an HAProxy container and two instances of the `store` service.
+
+. Stop all services and remove the store container before starting the modifications below.
+
+  docker rm docker-compose-store-1
+
+. Extract the docker-compose `store` base configuration to its own `docker-compose/store.yml` file:
++
+[source,yaml]
+----
+version: '3'
+services:
+  store:
+    image: store
+    environment:
+      ...
+----
+
+. Edit `docker-compose/docker-compose.yml` and remove the `store` service. Instead, create `store1` and `store2` services, extending the base configuration. Add the HAProxy service as well.
++
+[source,yaml]
+----
+services:
+  ...
+  store1:
+    extends:
+      file: store.yml
+      service: store
+    hostname: store1
+    ports:
+      - '8080:8080'
+  store2:
+    extends:
+      file: store.yml
+      service: store
+    hostname: store2
+    ports:
+      - '8081:8080'
+  haproxy:
+    extends:
+      file: haproxy.yml
+      service: haproxy
+----
+
+. Create the HAProxy base configuration at `docker-compose/haproxy.yml`:
++
+[source,yaml]
+----
+version: '3'
+services:
+  haproxy:
+    build:
+      context: .
+      dockerfile: Dockerfile-haproxy
+    image: haproxy
+    ports:
+      - '80:80'
+----
+
+. Create a `docker-compose/Dockerfile-haproxy` file to specify how Docker should build the HAProxy image:
++
+----
+FROM haproxy:2.5
+COPY haproxy.cfg /usr/local/etc/haproxy/haproxy.cfg
+----
+
+. Create `docker-compose/haproxy.cfg` with the HAProxy service configuration:
++
+----
+global
+    daemon
+    maxconn 2000
+
+defaults
+    mode http
+    timeout connect 5000ms
+    timeout client 50000ms
+    timeout server 50000ms
+
+frontend http-in
+    bind *:80
+    default_backend servers
+
+backend servers
+    balance roundrobin
+    cookie SERVERUSED insert indirect nocache
+    option httpchk GET /
+    option redispatch
+    default-server check
+    server store1 store1:8080 cookie store1
+    server store2 store2:8080 cookie store2
+----
++
+In the configuration above, `store1` and `store2` are the backend servers to load balance with a round-robin strategy. With **option redispatch**, HAProxy will re-dispatch the request to another server if the selected server fails.
+
+. HAProxy listens on port 80, so you'll need to update your Okta application. Run `okta login`, open the resulting URL in your browser, and go to **Applications**. Select your application and add `http://localhost/login/oauth2/code/oidc` as a **Login redirect URI**, and `http://localhost` as a **Logout redirect URI**.
+
+. Run all your Spring services again:
++
+----
+docker compose up
+----
+
+. Once all services are up, sign in to `http://localhost` with your credentials and navigate to **Entities** > **Product**.
+
+. In your browser's developer console, check the **SERVERUSED** cookie by typing `document.cookie`. You should output like the following:
++
+----
+'XSRF-TOKEN=e594183a-8eb6-4eec-9e26-200b29c4beec; SERVERUSED=store2'
+----
+
+. Stop the container of that `store` instance:
++
+----
+docker stop docker-compose-store2-1
+----
++
+TIP: If you get a "No such container" error, run `docker ps --format '{{.Names}}'` to print your container names.
+
+. Create a new entity and inspect the cookies in the POST request to verify that a different server responds, without losing the session:
++
+----
+SERVERUSED=store1
+----
+
+Did it work? If so, give yourself a big pat on the back!
+
+== Scale to the moon!
+
+I hope you enjoyed this screencast, and it helped you understand one possible approach to session sharing in JHipster with Spring Session.
+
+🤓 Find the code on GitHub: https://github.com/oktadev/okta-spring-session-redis-example[@oktadev/okta-spring-session-redis-example]
+
+🚀 Read the blog post: https://developer.okta.com/blog/2020/12/14/spring-session-redis[Scaling Secure Applications with Spring Session and Redis]
