@@ -1,26 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { connect } from 'react-redux';
 import { Link, RouteComponentProps } from 'react-router-dom';
-import { Button, Col, Row, Table } from 'reactstrap';
-import { Translate, ICrudGetAllAction, TextFormat, getSortState, IPaginationBaseState, JhiPagination, JhiItemCount } from 'react-jhipster';
+import { Button, Table } from 'reactstrap';
+import { Translate, TextFormat, getSortState, JhiPagination, JhiItemCount } from 'react-jhipster';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-import { IRootState } from 'app/shared/reducers';
 import { getEntities } from './product-order.reducer';
 import { IProductOrder } from 'app/shared/model/product/product-order.model';
 import { APP_DATE_FORMAT, APP_LOCAL_DATE_FORMAT } from 'app/config/constants';
-import { ITEMS_PER_PAGE } from 'app/shared/util/pagination.constants';
+import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/shared/util/pagination.constants';
 import { overridePaginationStateWithQueryParams } from 'app/shared/util/entity-utils';
+import { useAppDispatch, useAppSelector } from 'app/config/store';
 
-export interface IProductOrderProps extends StateProps, DispatchProps, RouteComponentProps<{ url: string }> {}
+export const ProductOrder = (props: RouteComponentProps<{ url: string }>) => {
+  const dispatch = useAppDispatch();
 
-export const ProductOrder = (props: IProductOrderProps) => {
   const [paginationState, setPaginationState] = useState(
-    overridePaginationStateWithQueryParams(getSortState(props.location, ITEMS_PER_PAGE), props.location.search)
+    overridePaginationStateWithQueryParams(getSortState(props.location, ITEMS_PER_PAGE, 'id'), props.location.search)
   );
 
+  const productOrderList = useAppSelector(state => state.productOrder.entities);
+  const loading = useAppSelector(state => state.productOrder.loading);
+  const totalItems = useAppSelector(state => state.productOrder.totalItems);
+
   const getAllEntities = () => {
-    props.getEntities(paginationState.activePage - 1, paginationState.itemsPerPage, `${paginationState.sort},${paginationState.order}`);
+    dispatch(
+      getEntities({
+        page: paginationState.activePage - 1,
+        size: paginationState.itemsPerPage,
+        sort: `${paginationState.sort},${paginationState.order}`,
+      })
+    );
   };
 
   const sortEntities = () => {
@@ -38,7 +47,7 @@ export const ProductOrder = (props: IProductOrderProps) => {
   useEffect(() => {
     const params = new URLSearchParams(props.location.search);
     const page = params.get('page');
-    const sort = params.get('sort');
+    const sort = params.get(SORT);
     if (page && sort) {
       const sortSplit = sort.split(',');
       setPaginationState({
@@ -53,7 +62,7 @@ export const ProductOrder = (props: IProductOrderProps) => {
   const sort = p => () => {
     setPaginationState({
       ...paginationState,
-      order: paginationState.order === 'asc' ? 'desc' : 'asc',
+      order: paginationState.order === ASC ? DESC : ASC,
       sort: p,
     });
   };
@@ -64,16 +73,27 @@ export const ProductOrder = (props: IProductOrderProps) => {
       activePage: currentPage,
     });
 
-  const { productOrderList, match, loading, totalItems } = props;
+  const handleSyncList = () => {
+    sortEntities();
+  };
+
+  const { match } = props;
+
   return (
     <div>
-      <h2 id="product-order-heading">
+      <h2 id="product-order-heading" data-cy="ProductOrderHeading">
         <Translate contentKey="storeApp.productProductOrder.home.title">Product Orders</Translate>
-        <Link to={`${match.url}/new`} className="btn btn-primary float-right jh-create-entity" id="jh-create-entity">
-          <FontAwesomeIcon icon="plus" />
-          &nbsp;
-          <Translate contentKey="storeApp.productProductOrder.home.createLabel">Create new Product Order</Translate>
-        </Link>
+        <div className="d-flex justify-content-end">
+          <Button className="me-2" color="info" onClick={handleSyncList} disabled={loading}>
+            <FontAwesomeIcon icon="sync" spin={loading} />{' '}
+            <Translate contentKey="storeApp.productProductOrder.home.refreshListLabel">Refresh List</Translate>
+          </Button>
+          <Link to={`${match.url}/new`} className="btn btn-primary jh-create-entity" id="jh-create-entity" data-cy="entityCreateButton">
+            <FontAwesomeIcon icon="plus" />
+            &nbsp;
+            <Translate contentKey="storeApp.productProductOrder.home.createLabel">Create new Product Order</Translate>
+          </Link>
+        </div>
       </h2>
       <div className="table-responsive">
         {productOrderList && productOrderList.length > 0 ? (
@@ -81,7 +101,7 @@ export const ProductOrder = (props: IProductOrderProps) => {
             <thead>
               <tr>
                 <th className="hand" onClick={sort('id')}>
-                  <Translate contentKey="global.field.id">ID</Translate> <FontAwesomeIcon icon="sort" />
+                  <Translate contentKey="storeApp.productProductOrder.id">ID</Translate> <FontAwesomeIcon icon="sort" />
                 </th>
                 <th className="hand" onClick={sort('placedDate')}>
                   <Translate contentKey="storeApp.productProductOrder.placedDate">Placed Date</Translate> <FontAwesomeIcon icon="sort" />
@@ -103,7 +123,7 @@ export const ProductOrder = (props: IProductOrderProps) => {
             </thead>
             <tbody>
               {productOrderList.map((productOrder, i) => (
-                <tr key={`entity-${i}`}>
+                <tr key={`entity-${i}`} data-cy="entityTable">
                   <td>
                     <Button tag={Link} to={`${match.url}/${productOrder.id}`} color="link" size="sm">
                       {productOrder.id}
@@ -118,9 +138,9 @@ export const ProductOrder = (props: IProductOrderProps) => {
                   <td>{productOrder.code}</td>
                   <td>{productOrder.invoiceId}</td>
                   <td>{productOrder.customer}</td>
-                  <td className="text-right">
+                  <td className="text-end">
                     <div className="btn-group flex-btn-group-container">
-                      <Button tag={Link} to={`${match.url}/${productOrder.id}`} color="info" size="sm">
+                      <Button tag={Link} to={`${match.url}/${productOrder.id}`} color="info" size="sm" data-cy="entityDetailsButton">
                         <FontAwesomeIcon icon="eye" />{' '}
                         <span className="d-none d-md-inline">
                           <Translate contentKey="entity.action.view">View</Translate>
@@ -131,6 +151,7 @@ export const ProductOrder = (props: IProductOrderProps) => {
                         to={`${match.url}/${productOrder.id}/edit?page=${paginationState.activePage}&sort=${paginationState.sort},${paginationState.order}`}
                         color="primary"
                         size="sm"
+                        data-cy="entityEditButton"
                       >
                         <FontAwesomeIcon icon="pencil-alt" />{' '}
                         <span className="d-none d-md-inline">
@@ -142,6 +163,7 @@ export const ProductOrder = (props: IProductOrderProps) => {
                         to={`${match.url}/${productOrder.id}/delete?page=${paginationState.activePage}&sort=${paginationState.sort},${paginationState.order}`}
                         color="danger"
                         size="sm"
+                        data-cy="entityDeleteButton"
                       >
                         <FontAwesomeIcon icon="trash" />{' '}
                         <span className="d-none d-md-inline">
@@ -162,20 +184,20 @@ export const ProductOrder = (props: IProductOrderProps) => {
           )
         )}
       </div>
-      {props.totalItems ? (
+      {totalItems ? (
         <div className={productOrderList && productOrderList.length > 0 ? '' : 'd-none'}>
-          <Row className="justify-content-center">
+          <div className="justify-content-center d-flex">
             <JhiItemCount page={paginationState.activePage} total={totalItems} itemsPerPage={paginationState.itemsPerPage} i18nEnabled />
-          </Row>
-          <Row className="justify-content-center">
+          </div>
+          <div className="justify-content-center d-flex">
             <JhiPagination
               activePage={paginationState.activePage}
               onSelect={handlePagination}
               maxButtons={5}
               itemsPerPage={paginationState.itemsPerPage}
-              totalItems={props.totalItems}
+              totalItems={totalItems}
             />
-          </Row>
+          </div>
         </div>
       ) : (
         ''
@@ -184,17 +206,4 @@ export const ProductOrder = (props: IProductOrderProps) => {
   );
 };
 
-const mapStateToProps = ({ productOrder }: IRootState) => ({
-  productOrderList: productOrder.entities,
-  loading: productOrder.loading,
-  totalItems: productOrder.totalItems,
-});
-
-const mapDispatchToProps = {
-  getEntities,
-};
-
-type StateProps = ReturnType<typeof mapStateToProps>;
-type DispatchProps = typeof mapDispatchToProps;
-
-export default connect(mapStateToProps, mapDispatchToProps)(ProductOrder);
+export default ProductOrder;

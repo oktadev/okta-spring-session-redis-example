@@ -1,4 +1,4 @@
-version: '2'
+version: '3'
 services:
   haproxy:
     build:
@@ -6,4 +6,4 @@ services:
       dockerfile: Dockerfile-haproxy
     image: haproxy
     ports:
-      - 80:80
+      - '80:80'

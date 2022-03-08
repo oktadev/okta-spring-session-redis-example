@@ -1,39 +1,42 @@
-import React, { useEffect } from 'react';
-import { connect } from 'react-redux';
+import React, { useEffect, useState } from 'react';
 import { RouteComponentProps } from 'react-router-dom';
 import { Modal, ModalHeader, ModalBody, ModalFooter, Button } from 'reactstrap';
-import { Translate, ICrudGetAction, ICrudDeleteAction } from 'react-jhipster';
+import { Translate } from 'react-jhipster';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-import { IInvoice } from 'app/shared/model/invoice/invoice.model';
-import { IRootState } from 'app/shared/reducers';
+import { useAppDispatch, useAppSelector } from 'app/config/store';
 import { getEntity, deleteEntity } from './invoice.reducer';
 
-export interface IInvoiceDeleteDialogProps extends StateProps, DispatchProps, RouteComponentProps<{ id: string }> {}
+export const InvoiceDeleteDialog = (props: RouteComponentProps<{ id: string }>) => {
+  const [loadModal, setLoadModal] = useState(false);
+  const dispatch = useAppDispatch();
 
-export const InvoiceDeleteDialog = (props: IInvoiceDeleteDialogProps) => {
   useEffect(() => {
-    props.getEntity(props.match.params.id);
+    dispatch(getEntity(props.match.params.id));
+    setLoadModal(true);
   }, []);
+
+  const invoiceEntity = useAppSelector(state => state.invoice.entity);
+  const updateSuccess = useAppSelector(state => state.invoice.updateSuccess);
 
   const handleClose = () => {
     props.history.push('/invoice' + props.location.search);
   };
 
   useEffect(() => {
-    if (props.updateSuccess) {
+    if (updateSuccess && loadModal) {
       handleClose();
+      setLoadModal(false);
     }
-  }, [props.updateSuccess]);
+  }, [updateSuccess]);
 
   const confirmDelete = () => {
-    props.deleteEntity(props.invoiceEntity.id);
+    dispatch(deleteEntity(invoiceEntity.id));
   };
 
-  const { invoiceEntity } = props;
   return (
     <Modal isOpen toggle={handleClose}>
-      <ModalHeader toggle={handleClose}>
+      <ModalHeader toggle={handleClose} data-cy="invoiceDeleteDialogHeading">
         <Translate contentKey="entity.delete.title">Confirm delete operation</Translate>
       </ModalHeader>
       <ModalBody id="storeApp.invoiceInvoice.delete.question">
@@ -47,7 +50,7 @@ export const InvoiceDeleteDialog = (props: IInvoiceDeleteDialogProps) => {
           &nbsp;
           <Translate contentKey="entity.action.cancel">Cancel</Translate>
         </Button>
-        <Button id="jhi-confirm-delete-invoice" color="danger" onClick={confirmDelete}>
+        <Button id="jhi-confirm-delete-invoice" data-cy="entityConfirmDeleteButton" color="danger" onClick={confirmDelete}>
           <FontAwesomeIcon icon="trash" />
           &nbsp;
           <Translate contentKey="entity.action.delete">Delete</Translate>
@@ -57,14 +60,4 @@ export const InvoiceDeleteDialog = (props: IInvoiceDeleteDialogProps) => {
   );
 };
 
-const mapStateToProps = ({ invoice }: IRootState) => ({
-  invoiceEntity: invoice.entity,
-  updateSuccess: invoice.updateSuccess,
-});
-
-const mapDispatchToProps = { getEntity, deleteEntity };
-
-type StateProps = ReturnType<typeof mapStateToProps>;
-type DispatchProps = typeof mapDispatchToProps;
-
-export default connect(mapStateToProps, mapDispatchToProps)(InvoiceDeleteDialog);
+export default InvoiceDeleteDialog;

@@ -1,10 +1,8 @@
 package com.jhipster.demo.invoice.client;
 
 import com.jhipster.demo.invoice.security.oauth2.AuthorizationHeaderUtil;
-
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
-
 import java.util.Optional;
 
 public class TokenRelayRequestInterceptor implements RequestInterceptor {

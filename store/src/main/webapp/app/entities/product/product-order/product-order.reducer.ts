@@ -1,149 +1,125 @@
 import axios from 'axios';
-import { ICrudGetAction, ICrudGetAllAction, ICrudPutAction, ICrudDeleteAction } from 'react-jhipster';
+import { createAsyncThunk, isFulfilled, isPending, isRejected } from '@reduxjs/toolkit';
 
 import { cleanEntity } from 'app/shared/util/entity-utils';
-import { REQUEST, SUCCESS, FAILURE } from 'app/shared/reducers/action-type.util';
-
+import { IQueryParams, createEntitySlice, EntityState, serializeAxiosError } from 'app/shared/reducers/reducer.utils';
 import { IProductOrder, defaultValue } from 'app/shared/model/product/product-order.model';
 
-export const ACTION_TYPES = {
-  FETCH_PRODUCTORDER_LIST: 'productOrder/FETCH_PRODUCTORDER_LIST',
-  FETCH_PRODUCTORDER: 'productOrder/FETCH_PRODUCTORDER',
-  CREATE_PRODUCTORDER: 'productOrder/CREATE_PRODUCTORDER',
-  UPDATE_PRODUCTORDER: 'productOrder/UPDATE_PRODUCTORDER',
-  DELETE_PRODUCTORDER: 'productOrder/DELETE_PRODUCTORDER',
-  RESET: 'productOrder/RESET',
-};
-
-const initialState = {
+const initialState: EntityState<IProductOrder> = {
   loading: false,
   errorMessage: null,
-  entities: [] as ReadonlyArray<IProductOrder>,
+  entities: [],
   entity: defaultValue,
   updating: false,
   totalItems: 0,
   updateSuccess: false,
 };
 
-export type ProductOrderState = Readonly<typeof initialState>;
-
-// Reducer
-
-export default (state: ProductOrderState = initialState, action): ProductOrderState => {
-  switch (action.type) {
-    case REQUEST(ACTION_TYPES.FETCH_PRODUCTORDER_LIST):
-    case REQUEST(ACTION_TYPES.FETCH_PRODUCTORDER):
-      return {
-        ...state,
-        errorMessage: null,
-        updateSuccess: false,
-        loading: true,
-      };
-    case REQUEST(ACTION_TYPES.CREATE_PRODUCTORDER):
-    case REQUEST(ACTION_TYPES.UPDATE_PRODUCTORDER):
-    case REQUEST(ACTION_TYPES.DELETE_PRODUCTORDER):
-      return {
-        ...state,
-        errorMessage: null,
-        updateSuccess: false,
-        updating: true,
-      };
-    case FAILURE(ACTION_TYPES.FETCH_PRODUCTORDER_LIST):
-    case FAILURE(ACTION_TYPES.FETCH_PRODUCTORDER):
-    case FAILURE(ACTION_TYPES.CREATE_PRODUCTORDER):
-    case FAILURE(ACTION_TYPES.UPDATE_PRODUCTORDER):
-    case FAILURE(ACTION_TYPES.DELETE_PRODUCTORDER):
-      return {
-        ...state,
-        loading: false,
-        updating: false,
-        updateSuccess: false,
-        errorMessage: action.payload,
-      };
-    case SUCCESS(ACTION_TYPES.FETCH_PRODUCTORDER_LIST):
-      return {
-        ...state,
-        loading: false,
-        entities: action.payload.data,
-        totalItems: parseInt(action.payload.headers['x-total-count'], 10),
-      };
-    case SUCCESS(ACTION_TYPES.FETCH_PRODUCTORDER):
-      return {
-        ...state,
-        loading: false,
-        entity: action.payload.data,
-      };
-    case SUCCESS(ACTION_TYPES.CREATE_PRODUCTORDER):
-    case SUCCESS(ACTION_TYPES.UPDATE_PRODUCTORDER):
-      return {
-        ...state,
-        updating: false,
-        updateSuccess: true,
-        entity: action.payload.data,
-      };
-    case SUCCESS(ACTION_TYPES.DELETE_PRODUCTORDER):
-      return {
-        ...state,
-        updating: false,
-        updateSuccess: true,
-        entity: {},
-      };
-    case ACTION_TYPES.RESET:
-      return {
-        ...initialState,
-      };
-    default:
-      return state;
-  }
-};
-
 const apiUrl = 'services/product/api/product-orders';
 
 // Actions
 
-export const getEntities: ICrudGetAllAction<IProductOrder> = (page, size, sort) => {
-  const requestUrl = `${apiUrl}${sort ? `?page=${page}&size=${size}&sort=${sort}` : ''}`;
-  return {
-    type: ACTION_TYPES.FETCH_PRODUCTORDER_LIST,
-    payload: axios.get<IProductOrder>(`${requestUrl}${sort ? '&' : '?'}cacheBuster=${new Date().getTime()}`),
-  };
-};
-
-export const getEntity: ICrudGetAction<IProductOrder> = id => {
-  const requestUrl = `${apiUrl}/${id}`;
-  return {
-    type: ACTION_TYPES.FETCH_PRODUCTORDER,
-    payload: axios.get<IProductOrder>(requestUrl),
-  };
-};
-
-export const createEntity: ICrudPutAction<IProductOrder> = entity => async dispatch => {
-  const result = await dispatch({
-    type: ACTION_TYPES.CREATE_PRODUCTORDER,
-    payload: axios.post(apiUrl, cleanEntity(entity)),
-  });
-  dispatch(getEntities());
-  return result;
-};
-
-export const updateEntity: ICrudPutAction<IProductOrder> = entity => async dispatch => {
-  const result = await dispatch({
-    type: ACTION_TYPES.UPDATE_PRODUCTORDER,
-    payload: axios.put(apiUrl, cleanEntity(entity)),
-  });
-  return result;
-};
-
-export const deleteEntity: ICrudDeleteAction<IProductOrder> = id => async dispatch => {
-  const requestUrl = `${apiUrl}/${id}`;
-  const result = await dispatch({
-    type: ACTION_TYPES.DELETE_PRODUCTORDER,
-    payload: axios.delete(requestUrl),
-  });
-  dispatch(getEntities());
-  return result;
-};
-
-export const reset = () => ({
-  type: ACTION_TYPES.RESET,
+export const getEntities = createAsyncThunk('productOrder/fetch_entity_list', async ({ page, size, sort }: IQueryParams) => {
+  const requestUrl = `${apiUrl}${sort ? `?page=${page}&size=${size}&sort=${sort}&` : '?'}cacheBuster=${new Date().getTime()}`;
+  return axios.get<IProductOrder[]>(requestUrl);
 });
+
+export const getEntity = createAsyncThunk(
+  'productOrder/fetch_entity',
+  async (id: string | number) => {
+    const requestUrl = `${apiUrl}/${id}`;
+    return axios.get<IProductOrder>(requestUrl);
+  },
+  { serializeError: serializeAxiosError }
+);
+
+export const createEntity = createAsyncThunk(
+  'productOrder/create_entity',
+  async (entity: IProductOrder, thunkAPI) => {
+    const result = await axios.post<IProductOrder>(apiUrl, cleanEntity(entity));
+    thunkAPI.dispatch(getEntities({}));
+    return result;
+  },
+  { serializeError: serializeAxiosError }
+);
+
+export const updateEntity = createAsyncThunk(
+  'productOrder/update_entity',
+  async (entity: IProductOrder, thunkAPI) => {
+    const result = await axios.put<IProductOrder>(`${apiUrl}/${entity.id}`, cleanEntity(entity));
+    thunkAPI.dispatch(getEntities({}));
+    return result;
+  },
+  { serializeError: serializeAxiosError }
+);
+
+export const partialUpdateEntity = createAsyncThunk(
+  'productOrder/partial_update_entity',
+  async (entity: IProductOrder, thunkAPI) => {
+    const result = await axios.patch<IProductOrder>(`${apiUrl}/${entity.id}`, cleanEntity(entity));
+    thunkAPI.dispatch(getEntities({}));
+    return result;
+  },
+  { serializeError: serializeAxiosError }
+);
+
+export const deleteEntity = createAsyncThunk(
+  'productOrder/delete_entity',
+  async (id: string | number, thunkAPI) => {
+    const requestUrl = `${apiUrl}/${id}`;
+    const result = await axios.delete<IProductOrder>(requestUrl);
+    thunkAPI.dispatch(getEntities({}));
+    return result;
+  },
+  { serializeError: serializeAxiosError }
+);
+
+// slice
+
+export const ProductOrderSlice = createEntitySlice({
+  name: 'productOrder',
+  initialState,
+  extraReducers(builder) {
+    builder
+      .addCase(getEntity.fulfilled, (state, action) => {
+        state.loading = false;
+        state.entity = action.payload.data;
+      })
+      .addCase(deleteEntity.fulfilled, state => {
+        state.updating = false;
+        state.updateSuccess = true;
+        state.entity = {};
+      })
+      .addMatcher(isFulfilled(getEntities), (state, action) => {
+        const { data, headers } = action.payload;
+
+        return {
+          ...state,
+          loading: false,
+          entities: data,
+          totalItems: parseInt(headers['x-total-count'], 10),
+        };
+      })
+      .addMatcher(isFulfilled(createEntity, updateEntity, partialUpdateEntity), (state, action) => {
+        state.updating = false;
+        state.loading = false;
+        state.updateSuccess = true;
+        state.entity = action.payload.data;
+      })
+      .addMatcher(isPending(getEntities, getEntity), state => {
+        state.errorMessage = null;
+        state.updateSuccess = false;
+        state.loading = true;
+      })
+      .addMatcher(isPending(createEntity, updateEntity, partialUpdateEntity, deleteEntity), state => {
+        state.errorMessage = null;
+        state.updateSuccess = false;
+        state.updating = true;
+      });
+  },
+});
+
+export const { reset } = ProductOrderSlice.actions;
+
+// Reducer
+export default ProductOrderSlice.reducer;

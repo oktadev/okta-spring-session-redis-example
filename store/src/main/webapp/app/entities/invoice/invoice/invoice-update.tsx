@@ -1,65 +1,81 @@
 import React, { useState, useEffect } from 'react';
-import { connect } from 'react-redux';
 import { Link, RouteComponentProps } from 'react-router-dom';
-import { Button, Row, Col, Label } from 'reactstrap';
-import { AvFeedback, AvForm, AvGroup, AvInput, AvField } from 'availity-reactstrap-validation';
-import { Translate, translate, ICrudGetAction, ICrudGetAllAction, ICrudPutAction } from 'react-jhipster';
+import { Button, Row, Col, FormText } from 'reactstrap';
+import { isNumber, Translate, translate, ValidatedField, ValidatedForm } from 'react-jhipster';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { IRootState } from 'app/shared/reducers';
 
 import { getEntity, updateEntity, createEntity, reset } from './invoice.reducer';
 import { IInvoice } from 'app/shared/model/invoice/invoice.model';
 import { convertDateTimeFromServer, convertDateTimeToServer, displayDefaultDateTime } from 'app/shared/util/date-utils';
 import { mapIdList } from 'app/shared/util/entity-utils';
+import { useAppDispatch, useAppSelector } from 'app/config/store';
+import { InvoiceStatus } from 'app/shared/model/enumerations/invoice-status.model';
+import { PaymentMethod } from 'app/shared/model/enumerations/payment-method.model';
 
-export interface IInvoiceUpdateProps extends StateProps, DispatchProps, RouteComponentProps<{ id: string }> {}
+export const InvoiceUpdate = (props: RouteComponentProps<{ id: string }>) => {
+  const dispatch = useAppDispatch();
 
-export const InvoiceUpdate = (props: IInvoiceUpdateProps) => {
-  const [isNew, setIsNew] = useState(!props.match.params || !props.match.params.id);
+  const [isNew] = useState(!props.match.params || !props.match.params.id);
 
-  const { invoiceEntity, loading, updating } = props;
-
+  const invoiceEntity = useAppSelector(state => state.invoice.entity);
+  const loading = useAppSelector(state => state.invoice.loading);
+  const updating = useAppSelector(state => state.invoice.updating);
+  const updateSuccess = useAppSelector(state => state.invoice.updateSuccess);
+  const invoiceStatusValues = Object.keys(InvoiceStatus);
+  const paymentMethodValues = Object.keys(PaymentMethod);
   const handleClose = () => {
     props.history.push('/invoice' + props.location.search);
   };
 
   useEffect(() => {
     if (isNew) {
-      props.reset();
+      dispatch(reset());
     } else {
-      props.getEntity(props.match.params.id);
+      dispatch(getEntity(props.match.params.id));
     }
   }, []);
 
   useEffect(() => {
-    if (props.updateSuccess) {
+    if (updateSuccess) {
       handleClose();
     }
-  }, [props.updateSuccess]);
+  }, [updateSuccess]);
 
-  const saveEntity = (event, errors, values) => {
+  const saveEntity = values => {
     values.date = convertDateTimeToServer(values.date);
     values.paymentDate = convertDateTimeToServer(values.paymentDate);
 
-    if (errors.length === 0) {
-      const entity = {
-        ...invoiceEntity,
-        ...values,
-      };
+    const entity = {
+      ...invoiceEntity,
+      ...values,
+    };
 
-      if (isNew) {
-        props.createEntity(entity);
-      } else {
-        props.updateEntity(entity);
-      }
+    if (isNew) {
+      dispatch(createEntity(entity));
+    } else {
+      dispatch(updateEntity(entity));
     }
   };
+
+  const defaultValues = () =>
+    isNew
+      ? {
+          date: displayDefaultDateTime(),
+          paymentDate: displayDefaultDateTime(),
+        }
+      : {
+          status: 'PAID',
+          paymentMethod: 'CREDIT_CARD',
+          ...invoiceEntity,
+          date: convertDateTimeFromServer(invoiceEntity.date),
+          paymentDate: convertDateTimeFromServer(invoiceEntity.paymentDate),
+        };
 
   return (
     <div>
       <Row className="justify-content-center">
         <Col md="8">
-          <h2 id="storeApp.invoiceInvoice.home.createOrEditLabel">
+          <h2 id="storeApp.invoiceInvoice.home.createOrEditLabel" data-cy="InvoiceCreateUpdateHeading">
             <Translate contentKey="storeApp.invoiceInvoice.home.createOrEditLabel">Create or edit a Invoice</Translate>
           </h2>
         </Col>
@@ -69,113 +85,94 @@ export const InvoiceUpdate = (props: IInvoiceUpdateProps) => {
           {loading ? (
             <p>Loading...</p>
           ) : (
-            <AvForm model={isNew ? {} : invoiceEntity} onSubmit={saveEntity}>
+            <ValidatedForm defaultValues={defaultValues()} onSubmit={saveEntity}>
               {!isNew ? (
-                <AvGroup>
-                  <Label for="invoice-id">
-                    <Translate contentKey="global.field.id">ID</Translate>
-                  </Label>
-                  <AvInput id="invoice-id" type="text" className="form-control" name="id" required readOnly />
-                </AvGroup>
+                <ValidatedField
+                  name="id"
+                  required
+                  readOnly
+                  id="invoice-id"
+                  label={translate('global.field.id')}
+                  validate={{ required: true }}
+                />
               ) : null}
-              <AvGroup>
-                <Label id="codeLabel" for="invoice-code">
-                  <Translate contentKey="storeApp.invoiceInvoice.code">Code</Translate>
-                </Label>
-                <AvField
-                  id="invoice-code"
-                  type="text"
-                  name="code"
-                  validate={{
-                    required: { value: true, errorMessage: translate('entity.validation.required') },
-                  }}
-                />
-              </AvGroup>
-              <AvGroup>
-                <Label id="dateLabel" for="invoice-date">
-                  <Translate contentKey="storeApp.invoiceInvoice.date">Date</Translate>
-                </Label>
-                <AvInput
-                  id="invoice-date"
-                  type="datetime-local"
-                  className="form-control"
-                  name="date"
-                  placeholder={'YYYY-MM-DD HH:mm'}
-                  value={isNew ? displayDefaultDateTime() : convertDateTimeFromServer(props.invoiceEntity.date)}
-                  validate={{
-                    required: { value: true, errorMessage: translate('entity.validation.required') },
-                  }}
-                />
-              </AvGroup>
-              <AvGroup>
-                <Label id="detailsLabel" for="invoice-details">
-                  <Translate contentKey="storeApp.invoiceInvoice.details">Details</Translate>
-                </Label>
-                <AvField id="invoice-details" type="text" name="details" />
-              </AvGroup>
-              <AvGroup>
-                <Label id="statusLabel" for="invoice-status">
-                  <Translate contentKey="storeApp.invoiceInvoice.status">Status</Translate>
-                </Label>
-                <AvInput
-                  id="invoice-status"
-                  type="select"
-                  className="form-control"
-                  name="status"
-                  value={(!isNew && invoiceEntity.status) || 'PAID'}
-                >
-                  <option value="PAID">{translate('storeApp.InvoiceStatus.PAID')}</option>
-                  <option value="ISSUED">{translate('storeApp.InvoiceStatus.ISSUED')}</option>
-                  <option value="CANCELLED">{translate('storeApp.InvoiceStatus.CANCELLED')}</option>
-                </AvInput>
-              </AvGroup>
-              <AvGroup>
-                <Label id="paymentMethodLabel" for="invoice-paymentMethod">
-                  <Translate contentKey="storeApp.invoiceInvoice.paymentMethod">Payment Method</Translate>
-                </Label>
-                <AvInput
-                  id="invoice-paymentMethod"
-                  type="select"
-                  className="form-control"
-                  name="paymentMethod"
-                  value={(!isNew && invoiceEntity.paymentMethod) || 'CREDIT_CARD'}
-                >
-                  <option value="CREDIT_CARD">{translate('storeApp.PaymentMethod.CREDIT_CARD')}</option>
-                  <option value="CASH_ON_DELIVERY">{translate('storeApp.PaymentMethod.CASH_ON_DELIVERY')}</option>
-                  <option value="PAYPAL">{translate('storeApp.PaymentMethod.PAYPAL')}</option>
-                </AvInput>
-              </AvGroup>
-              <AvGroup>
-                <Label id="paymentDateLabel" for="invoice-paymentDate">
-                  <Translate contentKey="storeApp.invoiceInvoice.paymentDate">Payment Date</Translate>
-                </Label>
-                <AvInput
-                  id="invoice-paymentDate"
-                  type="datetime-local"
-                  className="form-control"
-                  name="paymentDate"
-                  placeholder={'YYYY-MM-DD HH:mm'}
-                  value={isNew ? displayDefaultDateTime() : convertDateTimeFromServer(props.invoiceEntity.paymentDate)}
-                  validate={{
-                    required: { value: true, errorMessage: translate('entity.validation.required') },
-                  }}
-                />
-              </AvGroup>
-              <AvGroup>
-                <Label id="paymentAmountLabel" for="invoice-paymentAmount">
-                  <Translate contentKey="storeApp.invoiceInvoice.paymentAmount">Payment Amount</Translate>
-                </Label>
-                <AvField
-                  id="invoice-paymentAmount"
-                  type="text"
-                  name="paymentAmount"
-                  validate={{
-                    required: { value: true, errorMessage: translate('entity.validation.required') },
-                    number: { value: true, errorMessage: translate('entity.validation.number') },
-                  }}
-                />
-              </AvGroup>
-              <Button tag={Link} id="cancel-save" to="/invoice" replace color="info">
+              <ValidatedField
+                label={translate('storeApp.invoiceInvoice.code')}
+                id="invoice-code"
+                name="code"
+                data-cy="code"
+                type="text"
+                validate={{
+                  required: { value: true, message: translate('entity.validation.required') },
+                }}
+              />
+              <ValidatedField
+                label={translate('storeApp.invoiceInvoice.date')}
+                id="invoice-date"
+                name="date"
+                data-cy="date"
+                type="datetime-local"
+                placeholder="YYYY-MM-DD HH:mm"
+                validate={{
+                  required: { value: true, message: translate('entity.validation.required') },
+                }}
+              />
+              <ValidatedField
+                label={translate('storeApp.invoiceInvoice.details')}
+                id="invoice-details"
+                name="details"
+                data-cy="details"
+                type="text"
+              />
+              <ValidatedField
+                label={translate('storeApp.invoiceInvoice.status')}
+                id="invoice-status"
+                name="status"
+                data-cy="status"
+                type="select"
+              >
+                {invoiceStatusValues.map(invoiceStatus => (
+                  <option value={invoiceStatus} key={invoiceStatus}>
+                    {translate('storeApp.InvoiceStatus.' + invoiceStatus)}
+                  </option>
+                ))}
+              </ValidatedField>
+              <ValidatedField
+                label={translate('storeApp.invoiceInvoice.paymentMethod')}
+                id="invoice-paymentMethod"
+                name="paymentMethod"
+                data-cy="paymentMethod"
+                type="select"
+              >
+                {paymentMethodValues.map(paymentMethod => (
+                  <option value={paymentMethod} key={paymentMethod}>
+                    {translate('storeApp.PaymentMethod.' + paymentMethod)}
+                  </option>
+                ))}
+              </ValidatedField>
+              <ValidatedField
+                label={translate('storeApp.invoiceInvoice.paymentDate')}
+                id="invoice-paymentDate"
+                name="paymentDate"
+                data-cy="paymentDate"
+                type="datetime-local"
+                placeholder="YYYY-MM-DD HH:mm"
+                validate={{
+                  required: { value: true, message: translate('entity.validation.required') },
+                }}
+              />
+              <ValidatedField
+                label={translate('storeApp.invoiceInvoice.paymentAmount')}
+                id="invoice-paymentAmount"
+                name="paymentAmount"
+                data-cy="paymentAmount"
+                type="text"
+                validate={{
+                  required: { value: true, message: translate('entity.validation.required') },
+                  validate: v => isNumber(v) || translate('entity.validation.number'),
+                }}
+              />
+              <Button tag={Link} id="cancel-save" data-cy="entityCreateCancelButton" to="/invoice" replace color="info">
                 <FontAwesomeIcon icon="arrow-left" />
                 &nbsp;
                 <span className="d-none d-md-inline">
@@ -183,12 +180,12 @@ export const InvoiceUpdate = (props: IInvoiceUpdateProps) => {
                 </span>
               </Button>
               &nbsp;
-              <Button color="primary" id="save-entity" type="submit" disabled={updating}>
+              <Button color="primary" id="save-entity" data-cy="entityCreateSaveButton" type="submit" disabled={updating}>
                 <FontAwesomeIcon icon="save" />
                 &nbsp;
                 <Translate contentKey="entity.action.save">Save</Translate>
               </Button>
-            </AvForm>
+            </ValidatedForm>
           )}
         </Col>
       </Row>
@@ -196,21 +193,4 @@ export const InvoiceUpdate = (props: IInvoiceUpdateProps) => {
   );
 };
 
-const mapStateToProps = (storeState: IRootState) => ({
-  invoiceEntity: storeState.invoice.entity,
-  loading: storeState.invoice.loading,
-  updating: storeState.invoice.updating,
-  updateSuccess: storeState.invoice.updateSuccess,
-});
-
-const mapDispatchToProps = {
-  getEntity,
-  updateEntity,
-  createEntity,
-  reset,
-};
-
-type StateProps = ReturnType<typeof mapStateToProps>;
-type DispatchProps = typeof mapDispatchToProps;
-
-export default connect(mapStateToProps, mapDispatchToProps)(InvoiceUpdate);
+export default InvoiceUpdate;

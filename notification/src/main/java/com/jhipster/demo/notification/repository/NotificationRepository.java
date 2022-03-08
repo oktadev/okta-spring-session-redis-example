@@ -1,9 +1,8 @@
 package com.jhipster.demo.notification.repository;
 
 import com.jhipster.demo.notification.domain.Notification;
-
-import org.springframework.data.mongodb.repository.Query;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -11,5 +10,4 @@ import org.springframework.stereotype.Repository;
  */
 @SuppressWarnings("unused")
 @Repository
-public interface NotificationRepository extends MongoRepository<Notification, String> {
-}
+public interface NotificationRepository extends MongoRepository<Notification, String> {}

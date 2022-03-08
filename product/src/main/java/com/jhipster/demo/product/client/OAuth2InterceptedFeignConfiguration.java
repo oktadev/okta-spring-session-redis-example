@@ -1,10 +1,8 @@
 package com.jhipster.demo.product.client;
 
-import org.springframework.context.annotation.Bean;
-
-import feign.RequestInterceptor;
-
 import com.jhipster.demo.product.security.oauth2.AuthorizationHeaderUtil;
+import feign.RequestInterceptor;
+import org.springframework.context.annotation.Bean;
 
 public class OAuth2InterceptedFeignConfiguration {
 

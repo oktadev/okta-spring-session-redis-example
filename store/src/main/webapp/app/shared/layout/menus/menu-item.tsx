@@ -8,6 +8,7 @@ export interface IMenuItem {
   icon: IconProp;
   to: string;
   id?: string;
+  'data-cy'?: string;
 }
 
 export default class MenuItem extends React.Component<IMenuItem> {
@@ -15,7 +16,7 @@ export default class MenuItem extends React.Component<IMenuItem> {
     const { to, icon, id, children } = this.props;
 
     return (
-      <DropdownItem tag={Link} to={to} id={id}>
+      <DropdownItem tag={Link} to={to} id={id} data-cy={this.props['data-cy']}>
         <FontAwesomeIcon icon={icon} fixedWidth /> {children}
       </DropdownItem>
     );

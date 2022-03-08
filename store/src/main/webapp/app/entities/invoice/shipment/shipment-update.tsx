@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { connect } from 'react-redux';
 import { Link, RouteComponentProps } from 'react-router-dom';
-import { Button, Row, Col, Label } from 'reactstrap';
-import { AvFeedback, AvForm, AvGroup, AvInput, AvField } from 'availity-reactstrap-validation';
-import { Translate, translate, ICrudGetAction, ICrudGetAllAction, ICrudPutAction } from 'react-jhipster';
+import { Button, Row, Col, FormText } from 'reactstrap';
+import { isNumber, Translate, translate, ValidatedField, ValidatedForm } from 'react-jhipster';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { IRootState } from 'app/shared/reducers';
 
 import { IInvoice } from 'app/shared/model/invoice/invoice.model';
 import { getEntities as getInvoices } from 'app/entities/invoice/invoice/invoice.reducer';
@@ -13,57 +10,70 @@ import { getEntity, updateEntity, createEntity, reset } from './shipment.reducer
 import { IShipment } from 'app/shared/model/invoice/shipment.model';
 import { convertDateTimeFromServer, convertDateTimeToServer, displayDefaultDateTime } from 'app/shared/util/date-utils';
 import { mapIdList } from 'app/shared/util/entity-utils';
+import { useAppDispatch, useAppSelector } from 'app/config/store';
 
-export interface IShipmentUpdateProps extends StateProps, DispatchProps, RouteComponentProps<{ id: string }> {}
+export const ShipmentUpdate = (props: RouteComponentProps<{ id: string }>) => {
+  const dispatch = useAppDispatch();
 
-export const ShipmentUpdate = (props: IShipmentUpdateProps) => {
-  const [invoiceId, setInvoiceId] = useState('0');
-  const [isNew, setIsNew] = useState(!props.match.params || !props.match.params.id);
+  const [isNew] = useState(!props.match.params || !props.match.params.id);
 
-  const { shipmentEntity, invoices, loading, updating } = props;
-
+  const invoices = useAppSelector(state => state.invoice.entities);
+  const shipmentEntity = useAppSelector(state => state.shipment.entity);
+  const loading = useAppSelector(state => state.shipment.loading);
+  const updating = useAppSelector(state => state.shipment.updating);
+  const updateSuccess = useAppSelector(state => state.shipment.updateSuccess);
   const handleClose = () => {
     props.history.push('/shipment' + props.location.search);
   };
 
   useEffect(() => {
     if (isNew) {
-      props.reset();
+      dispatch(reset());
     } else {
-      props.getEntity(props.match.params.id);
+      dispatch(getEntity(props.match.params.id));
     }
 
-    props.getInvoices();
+    dispatch(getInvoices({}));
   }, []);
 
   useEffect(() => {
-    if (props.updateSuccess) {
+    if (updateSuccess) {
       handleClose();
     }
-  }, [props.updateSuccess]);
+  }, [updateSuccess]);
 
-  const saveEntity = (event, errors, values) => {
+  const saveEntity = values => {
     values.date = convertDateTimeToServer(values.date);
 
-    if (errors.length === 0) {
-      const entity = {
-        ...shipmentEntity,
-        ...values,
-      };
+    const entity = {
+      ...shipmentEntity,
+      ...values,
+      invoice: invoices.find(it => it.id.toString() === values.invoice.toString()),
+    };
 
-      if (isNew) {
-        props.createEntity(entity);
-      } else {
-        props.updateEntity(entity);
-      }
+    if (isNew) {
+      dispatch(createEntity(entity));
+    } else {
+      dispatch(updateEntity(entity));
     }
   };
+
+  const defaultValues = () =>
+    isNew
+      ? {
+          date: displayDefaultDateTime(),
+        }
+      : {
+          ...shipmentEntity,
+          date: convertDateTimeFromServer(shipmentEntity.date),
+          invoice: shipmentEntity?.invoice?.id,
+        };
 
   return (
     <div>
       <Row className="justify-content-center">
         <Col md="8">
-          <h2 id="storeApp.invoiceShipment.home.createOrEditLabel">
+          <h2 id="storeApp.invoiceShipment.home.createOrEditLabel" data-cy="ShipmentCreateUpdateHeading">
             <Translate contentKey="storeApp.invoiceShipment.home.createOrEditLabel">Create or edit a Shipment</Translate>
           </h2>
         </Col>
@@ -73,68 +83,63 @@ export const ShipmentUpdate = (props: IShipmentUpdateProps) => {
           {loading ? (
             <p>Loading...</p>
           ) : (
-            <AvForm model={isNew ? {} : shipmentEntity} onSubmit={saveEntity}>
+            <ValidatedForm defaultValues={defaultValues()} onSubmit={saveEntity}>
               {!isNew ? (
-                <AvGroup>
-                  <Label for="shipment-id">
-                    <Translate contentKey="global.field.id">ID</Translate>
-                  </Label>
-                  <AvInput id="shipment-id" type="text" className="form-control" name="id" required readOnly />
-                </AvGroup>
-              ) : null}
-              <AvGroup>
-                <Label id="trackingCodeLabel" for="shipment-trackingCode">
-                  <Translate contentKey="storeApp.invoiceShipment.trackingCode">Tracking Code</Translate>
-                </Label>
-                <AvField id="shipment-trackingCode" type="text" name="trackingCode" />
-              </AvGroup>
-              <AvGroup>
-                <Label id="dateLabel" for="shipment-date">
-                  <Translate contentKey="storeApp.invoiceShipment.date">Date</Translate>
-                </Label>
-                <AvInput
-                  id="shipment-date"
-                  type="datetime-local"
-                  className="form-control"
-                  name="date"
-                  placeholder={'YYYY-MM-DD HH:mm'}
-                  value={isNew ? displayDefaultDateTime() : convertDateTimeFromServer(props.shipmentEntity.date)}
-                  validate={{
-                    required: { value: true, errorMessage: translate('entity.validation.required') },
-                  }}
-                />
-              </AvGroup>
-              <AvGroup>
-                <Label id="detailsLabel" for="shipment-details">
-                  <Translate contentKey="storeApp.invoiceShipment.details">Details</Translate>
-                </Label>
-                <AvField id="shipment-details" type="text" name="details" />
-              </AvGroup>
-              <AvGroup>
-                <Label for="shipment-invoice">
-                  <Translate contentKey="storeApp.invoiceShipment.invoice">Invoice</Translate>
-                </Label>
-                <AvInput
-                  id="shipment-invoice"
-                  type="select"
-                  className="form-control"
-                  name="invoice.id"
-                  value={isNew ? invoices[0] && invoices[0].id : shipmentEntity.invoice?.id}
+                <ValidatedField
+                  name="id"
                   required
-                >
-                  {invoices
-                    ? invoices.map(otherEntity => (
-                        <option value={otherEntity.id} key={otherEntity.id}>
-                          {otherEntity.code}
-                        </option>
-                      ))
-                    : null}
-                </AvInput>
-                <AvFeedback>
-                  <Translate contentKey="entity.validation.required">This field is required.</Translate>
-                </AvFeedback>
-              </AvGroup>
-              <Button tag={Link} id="cancel-save" to="/shipment" replace color="info">
+                  readOnly
+                  id="shipment-id"
+                  label={translate('global.field.id')}
+                  validate={{ required: true }}
+                />
+              ) : null}
+              <ValidatedField
+                label={translate('storeApp.invoiceShipment.trackingCode')}
+                id="shipment-trackingCode"
+                name="trackingCode"
+                data-cy="trackingCode"
+                type="text"
+              />
+              <ValidatedField
+                label={translate('storeApp.invoiceShipment.date')}
+                id="shipment-date"
+                name="date"
+                data-cy="date"
+                type="datetime-local"
+                placeholder="YYYY-MM-DD HH:mm"
+                validate={{
+                  required: { value: true, message: translate('entity.validation.required') },
+                }}
+              />
+              <ValidatedField
+                label={translate('storeApp.invoiceShipment.details')}
+                id="shipment-details"
+                name="details"
+                data-cy="details"
+                type="text"
+              />
+              <ValidatedField
+                id="shipment-invoice"
+                name="invoice"
+                data-cy="invoice"
+                label={translate('storeApp.invoiceShipment.invoice')}
+                type="select"
+                required
+              >
+                <option value="" key="0" />
+                {invoices
+                  ? invoices.map(otherEntity => (
+                      <option value={otherEntity.id} key={otherEntity.id}>
+                        {otherEntity.code}
+                      </option>
+                    ))
+                  : null}
+              </ValidatedField>
+              <FormText>
+                <Translate contentKey="entity.validation.required">This field is required.</Translate>
+              </FormText>
+              <Button tag={Link} id="cancel-save" data-cy="entityCreateCancelButton" to="/shipment" replace color="info">
                 <FontAwesomeIcon icon="arrow-left" />
                 &nbsp;
                 <span className="d-none d-md-inline">
@@ -142,12 +147,12 @@ export const ShipmentUpdate = (props: IShipmentUpdateProps) => {
                 </span>
               </Button>
               &nbsp;
-              <Button color="primary" id="save-entity" type="submit" disabled={updating}>
+              <Button color="primary" id="save-entity" data-cy="entityCreateSaveButton" type="submit" disabled={updating}>
                 <FontAwesomeIcon icon="save" />
                 &nbsp;
                 <Translate contentKey="entity.action.save">Save</Translate>
               </Button>
-            </AvForm>
+            </ValidatedForm>
           )}
         </Col>
       </Row>
@@ -155,23 +160,4 @@ export const ShipmentUpdate = (props: IShipmentUpdateProps) => {
   );
 };
 
-const mapStateToProps = (storeState: IRootState) => ({
-  invoices: storeState.invoice.entities,
-  shipmentEntity: storeState.shipment.entity,
-  loading: storeState.shipment.loading,
-  updating: storeState.shipment.updating,
-  updateSuccess: storeState.shipment.updateSuccess,
-});
-
-const mapDispatchToProps = {
-  getInvoices,
-  getEntity,
-  updateEntity,
-  createEntity,
-  reset,
-};
-
-type StateProps = ReturnType<typeof mapStateToProps>;
-type DispatchProps = typeof mapDispatchToProps;
-
-export default connect(mapStateToProps, mapDispatchToProps)(ShipmentUpdate);
+export default ShipmentUpdate;

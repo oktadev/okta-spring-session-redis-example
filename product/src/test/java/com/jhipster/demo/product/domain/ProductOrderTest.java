@@ -1,13 +1,14 @@
 package com.jhipster.demo.product.domain;
 
-import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
-import com.jhipster.demo.product.web.rest.TestUtil;
 
-public class ProductOrderTest {
+import com.jhipster.demo.product.web.rest.TestUtil;
+import org.junit.jupiter.api.Test;
+
+class ProductOrderTest {
 
     @Test
-    public void equalsVerifier() throws Exception {
+    void equalsVerifier() throws Exception {
         TestUtil.equalsVerifier(ProductOrder.class);
         ProductOrder productOrder1 = new ProductOrder();
         productOrder1.setId(1L);

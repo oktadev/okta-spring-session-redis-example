@@ -1,30 +1,34 @@
 import React, { useEffect } from 'react';
-import { connect } from 'react-redux';
 import { Link, RouteComponentProps } from 'react-router-dom';
 import { Button, Row, Col } from 'reactstrap';
-import { Translate, ICrudGetAction, TextFormat } from 'react-jhipster';
+import { Translate, TextFormat } from 'react-jhipster';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-import { IRootState } from 'app/shared/reducers';
 import { getEntity } from './shipment.reducer';
-import { IShipment } from 'app/shared/model/invoice/shipment.model';
 import { APP_DATE_FORMAT, APP_LOCAL_DATE_FORMAT } from 'app/config/constants';
+import { useAppDispatch, useAppSelector } from 'app/config/store';
 
-export interface IShipmentDetailProps extends StateProps, DispatchProps, RouteComponentProps<{ id: string }> {}
+export const ShipmentDetail = (props: RouteComponentProps<{ id: string }>) => {
+  const dispatch = useAppDispatch();
 
-export const ShipmentDetail = (props: IShipmentDetailProps) => {
   useEffect(() => {
-    props.getEntity(props.match.params.id);
+    dispatch(getEntity(props.match.params.id));
   }, []);
 
-  const { shipmentEntity } = props;
+  const shipmentEntity = useAppSelector(state => state.shipment.entity);
   return (
     <Row>
       <Col md="8">
-        <h2>
-          <Translate contentKey="storeApp.invoiceShipment.detail.title">Shipment</Translate> [<b>{shipmentEntity.id}</b>]
+        <h2 data-cy="shipmentDetailsHeading">
+          <Translate contentKey="storeApp.invoiceShipment.detail.title">Shipment</Translate>
         </h2>
         <dl className="jh-entity-details">
+          <dt>
+            <span id="id">
+              <Translate contentKey="global.field.id">ID</Translate>
+            </span>
+          </dt>
+          <dd>{shipmentEntity.id}</dd>
           <dt>
             <span id="trackingCode">
               <Translate contentKey="storeApp.invoiceShipment.trackingCode">Tracking Code</Translate>
@@ -48,7 +52,7 @@ export const ShipmentDetail = (props: IShipmentDetailProps) => {
           </dt>
           <dd>{shipmentEntity.invoice ? shipmentEntity.invoice.code : ''}</dd>
         </dl>
-        <Button tag={Link} to="/shipment" replace color="info">
+        <Button tag={Link} to="/shipment" replace color="info" data-cy="entityDetailsBackButton">
           <FontAwesomeIcon icon="arrow-left" />{' '}
           <span className="d-none d-md-inline">
             <Translate contentKey="entity.action.back">Back</Translate>
@@ -66,13 +70,4 @@ export const ShipmentDetail = (props: IShipmentDetailProps) => {
   );
 };
 
-const mapStateToProps = ({ shipment }: IRootState) => ({
-  shipmentEntity: shipment.entity,
-});
-
-const mapDispatchToProps = { getEntity };
-
-type StateProps = ReturnType<typeof mapStateToProps>;
-type DispatchProps = typeof mapDispatchToProps;
-
-export default connect(mapStateToProps, mapDispatchToProps)(ShipmentDetail);
+export default ShipmentDetail;

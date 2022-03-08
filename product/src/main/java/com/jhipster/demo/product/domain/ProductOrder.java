@@ -1,17 +1,15 @@
 package com.jhipster.demo.product.domain;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import javax.persistence.*;
-import javax.validation.constraints.*;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.jhipster.demo.product.domain.enumeration.OrderStatus;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
-
-import com.jhipster.demo.product.domain.enumeration.OrderStatus;
+import javax.persistence.*;
+import javax.validation.constraints.*;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 /**
  * A ProductOrder.
@@ -25,6 +23,7 @@ public class ProductOrder implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
 
     @NotNull
@@ -49,11 +48,18 @@ public class ProductOrder implements Serializable {
 
     @OneToMany(mappedBy = "order")
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+    @JsonIgnoreProperties(value = { "product", "order" }, allowSetters = true)
     private Set<OrderItem> orderItems = new HashSet<>();
 
     // jhipster-needle-entity-add-field - JHipster will add fields here
+
     public Long getId() {
-        return id;
+        return this.id;
+    }
+
+    public ProductOrder id(Long id) {
+        this.setId(id);
+        return this;
     }
 
     public void setId(Long id) {
@@ -61,11 +67,11 @@ public class ProductOrder implements Serializable {
     }
 
     public Instant getPlacedDate() {
-        return placedDate;
+        return this.placedDate;
     }
 
     public ProductOrder placedDate(Instant placedDate) {
-        this.placedDate = placedDate;
+        this.setPlacedDate(placedDate);
         return this;
     }
 
@@ -74,11 +80,11 @@ public class ProductOrder implements Serializable {
     }
 
     public OrderStatus getStatus() {
-        return status;
+        return this.status;
     }
 
     public ProductOrder status(OrderStatus status) {
-        this.status = status;
+        this.setStatus(status);
         return this;
     }
 
@@ -87,11 +93,11 @@ public class ProductOrder implements Serializable {
     }
 
     public String getCode() {
-        return code;
+        return this.code;
     }
 
     public ProductOrder code(String code) {
-        this.code = code;
+        this.setCode(code);
         return this;
     }
 
@@ -100,11 +106,11 @@ public class ProductOrder implements Serializable {
     }
 
     public Long getInvoiceId() {
-        return invoiceId;
+        return this.invoiceId;
     }
 
     public ProductOrder invoiceId(Long invoiceId) {
-        this.invoiceId = invoiceId;
+        this.setInvoiceId(invoiceId);
         return this;
     }
 
@@ -113,11 +119,11 @@ public class ProductOrder implements Serializable {
     }
 
     public String getCustomer() {
-        return customer;
+        return this.customer;
     }
 
     public ProductOrder customer(String customer) {
-        this.customer = customer;
+        this.setCustomer(customer);
         return this;
     }
 
@@ -126,11 +132,21 @@ public class ProductOrder implements Serializable {
     }
 
     public Set<OrderItem> getOrderItems() {
-        return orderItems;
+        return this.orderItems;
+    }
+
+    public void setOrderItems(Set<OrderItem> orderItems) {
+        if (this.orderItems != null) {
+            this.orderItems.forEach(i -> i.setOrder(null));
+        }
+        if (orderItems != null) {
+            orderItems.forEach(i -> i.setOrder(this));
+        }
+        this.orderItems = orderItems;
     }
 
     public ProductOrder orderItems(Set<OrderItem> orderItems) {
-        this.orderItems = orderItems;
+        this.setOrderItems(orderItems);
         return this;
     }
 
@@ -146,9 +162,6 @@ public class ProductOrder implements Serializable {
         return this;
     }
 
-    public void setOrderItems(Set<OrderItem> orderItems) {
-        this.orderItems = orderItems;
-    }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here
 
     @Override
@@ -164,7 +177,8 @@ public class ProductOrder implements Serializable {
 
     @Override
     public int hashCode() {
-        return 31;
+        // see https://vladmihalcea.com/how-to-implement-equals-and-hashcode-using-the-jpa-entity-identifier/
+        return getClass().hashCode();
     }
 
     // prettier-ignore

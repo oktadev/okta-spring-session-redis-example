@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { connect } from 'react-redux';
 import { Link, RouteComponentProps } from 'react-router-dom';
-import { Button, Row, Col, Label } from 'reactstrap';
-import { AvFeedback, AvForm, AvGroup, AvInput, AvField } from 'availity-reactstrap-validation';
-import { Translate, translate, ICrudGetAction, ICrudGetAllAction, ICrudPutAction } from 'react-jhipster';
+import { Button, Row, Col, FormText } from 'reactstrap';
+import { isNumber, Translate, translate, ValidatedField, ValidatedForm } from 'react-jhipster';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { IRootState } from 'app/shared/reducers';
 
 import { IProduct } from 'app/shared/model/product/product.model';
 import { getEntities as getProducts } from 'app/entities/product/product/product.reducer';
@@ -15,57 +12,72 @@ import { getEntity, updateEntity, createEntity, reset } from './order-item.reduc
 import { IOrderItem } from 'app/shared/model/product/order-item.model';
 import { convertDateTimeFromServer, convertDateTimeToServer, displayDefaultDateTime } from 'app/shared/util/date-utils';
 import { mapIdList } from 'app/shared/util/entity-utils';
+import { useAppDispatch, useAppSelector } from 'app/config/store';
+import { OrderItemStatus } from 'app/shared/model/enumerations/order-item-status.model';
 
-export interface IOrderItemUpdateProps extends StateProps, DispatchProps, RouteComponentProps<{ id: string }> {}
+export const OrderItemUpdate = (props: RouteComponentProps<{ id: string }>) => {
+  const dispatch = useAppDispatch();
 
-export const OrderItemUpdate = (props: IOrderItemUpdateProps) => {
-  const [productId, setProductId] = useState('0');
-  const [orderId, setOrderId] = useState('0');
-  const [isNew, setIsNew] = useState(!props.match.params || !props.match.params.id);
+  const [isNew] = useState(!props.match.params || !props.match.params.id);
 
-  const { orderItemEntity, products, productOrders, loading, updating } = props;
-
+  const products = useAppSelector(state => state.product.entities);
+  const productOrders = useAppSelector(state => state.productOrder.entities);
+  const orderItemEntity = useAppSelector(state => state.orderItem.entity);
+  const loading = useAppSelector(state => state.orderItem.loading);
+  const updating = useAppSelector(state => state.orderItem.updating);
+  const updateSuccess = useAppSelector(state => state.orderItem.updateSuccess);
+  const orderItemStatusValues = Object.keys(OrderItemStatus);
   const handleClose = () => {
     props.history.push('/order-item' + props.location.search);
   };
 
   useEffect(() => {
     if (isNew) {
-      props.reset();
+      dispatch(reset());
     } else {
-      props.getEntity(props.match.params.id);
+      dispatch(getEntity(props.match.params.id));
     }
 
-    props.getProducts();
-    props.getProductOrders();
+    dispatch(getProducts({}));
+    dispatch(getProductOrders({}));
   }, []);
 
   useEffect(() => {
-    if (props.updateSuccess) {
+    if (updateSuccess) {
       handleClose();
     }
-  }, [props.updateSuccess]);
+  }, [updateSuccess]);
 
-  const saveEntity = (event, errors, values) => {
-    if (errors.length === 0) {
-      const entity = {
-        ...orderItemEntity,
-        ...values,
-      };
+  const saveEntity = values => {
+    const entity = {
+      ...orderItemEntity,
+      ...values,
+      product: products.find(it => it.id.toString() === values.product.toString()),
+      order: productOrders.find(it => it.id.toString() === values.order.toString()),
+    };
 
-      if (isNew) {
-        props.createEntity(entity);
-      } else {
-        props.updateEntity(entity);
-      }
+    if (isNew) {
+      dispatch(createEntity(entity));
+    } else {
+      dispatch(updateEntity(entity));
     }
   };
+
+  const defaultValues = () =>
+    isNew
+      ? {}
+      : {
+          status: 'AVAILABLE',
+          ...orderItemEntity,
+          product: orderItemEntity?.product?.id,
+          order: orderItemEntity?.order?.id,
+        };
 
   return (
     <div>
       <Row className="justify-content-center">
         <Col md="8">
-          <h2 id="storeApp.productOrderItem.home.createOrEditLabel">
+          <h2 id="storeApp.productOrderItem.home.createOrEditLabel" data-cy="OrderItemCreateUpdateHeading">
             <Translate contentKey="storeApp.productOrderItem.home.createOrEditLabel">Create or edit a OrderItem</Translate>
           </h2>
         </Col>
@@ -75,111 +87,95 @@ export const OrderItemUpdate = (props: IOrderItemUpdateProps) => {
           {loading ? (
             <p>Loading...</p>
           ) : (
-            <AvForm model={isNew ? {} : orderItemEntity} onSubmit={saveEntity}>
+            <ValidatedForm defaultValues={defaultValues()} onSubmit={saveEntity}>
               {!isNew ? (
-                <AvGroup>
-                  <Label for="order-item-id">
-                    <Translate contentKey="global.field.id">ID</Translate>
-                  </Label>
-                  <AvInput id="order-item-id" type="text" className="form-control" name="id" required readOnly />
-                </AvGroup>
+                <ValidatedField
+                  name="id"
+                  required
+                  readOnly
+                  id="order-item-id"
+                  label={translate('global.field.id')}
+                  validate={{ required: true }}
+                />
               ) : null}
-              <AvGroup>
-                <Label id="quantityLabel" for="order-item-quantity">
-                  <Translate contentKey="storeApp.productOrderItem.quantity">Quantity</Translate>
-                </Label>
-                <AvField
-                  id="order-item-quantity"
-                  type="string"
-                  className="form-control"
-                  name="quantity"
-                  validate={{
-                    required: { value: true, errorMessage: translate('entity.validation.required') },
-                    min: { value: 0, errorMessage: translate('entity.validation.min', { min: 0 }) },
-                    number: { value: true, errorMessage: translate('entity.validation.number') },
-                  }}
-                />
-              </AvGroup>
-              <AvGroup>
-                <Label id="totalPriceLabel" for="order-item-totalPrice">
-                  <Translate contentKey="storeApp.productOrderItem.totalPrice">Total Price</Translate>
-                </Label>
-                <AvField
-                  id="order-item-totalPrice"
-                  type="text"
-                  name="totalPrice"
-                  validate={{
-                    required: { value: true, errorMessage: translate('entity.validation.required') },
-                    min: { value: 0, errorMessage: translate('entity.validation.min', { min: 0 }) },
-                    number: { value: true, errorMessage: translate('entity.validation.number') },
-                  }}
-                />
-              </AvGroup>
-              <AvGroup>
-                <Label id="statusLabel" for="order-item-status">
-                  <Translate contentKey="storeApp.productOrderItem.status">Status</Translate>
-                </Label>
-                <AvInput
-                  id="order-item-status"
-                  type="select"
-                  className="form-control"
-                  name="status"
-                  value={(!isNew && orderItemEntity.status) || 'AVAILABLE'}
-                >
-                  <option value="AVAILABLE">{translate('storeApp.OrderItemStatus.AVAILABLE')}</option>
-                  <option value="OUT_OF_STOCK">{translate('storeApp.OrderItemStatus.OUT_OF_STOCK')}</option>
-                  <option value="BACK_ORDER">{translate('storeApp.OrderItemStatus.BACK_ORDER')}</option>
-                </AvInput>
-              </AvGroup>
-              <AvGroup>
-                <Label for="order-item-product">
-                  <Translate contentKey="storeApp.productOrderItem.product">Product</Translate>
-                </Label>
-                <AvInput
-                  id="order-item-product"
-                  type="select"
-                  className="form-control"
-                  name="product.id"
-                  value={isNew ? products[0] && products[0].id : orderItemEntity.product?.id}
-                  required
-                >
-                  {products
-                    ? products.map(otherEntity => (
-                        <option value={otherEntity.id} key={otherEntity.id}>
-                          {otherEntity.name}
-                        </option>
-                      ))
-                    : null}
-                </AvInput>
-                <AvFeedback>
-                  <Translate contentKey="entity.validation.required">This field is required.</Translate>
-                </AvFeedback>
-              </AvGroup>
-              <AvGroup>
-                <Label for="order-item-order">
-                  <Translate contentKey="storeApp.productOrderItem.order">Order</Translate>
-                </Label>
-                <AvInput
-                  id="order-item-order"
-                  type="select"
-                  className="form-control"
-                  name="order.id"
-                  value={isNew ? productOrders[0] && productOrders[0].id : orderItemEntity.order?.id}
-                  required
-                >
-                  {productOrders
-                    ? productOrders.map(otherEntity => (
-                        <option value={otherEntity.id} key={otherEntity.id}>
-                          {otherEntity.code}
-                        </option>
-                      ))
-                    : null}
-                </AvInput>
-                <AvFeedback>
-                  <Translate contentKey="entity.validation.required">This field is required.</Translate>
-                </AvFeedback>
-              </AvGroup>
-              <Button tag={Link} id="cancel-save" to="/order-item" replace color="info">
+              <ValidatedField
+                label={translate('storeApp.productOrderItem.quantity')}
+                id="order-item-quantity"
+                name="quantity"
+                data-cy="quantity"
+                type="text"
+                validate={{
+                  required: { value: true, message: translate('entity.validation.required') },
+                  min: { value: 0, message: translate('entity.validation.min', { min: 0 }) },
+                  validate: v => isNumber(v) || translate('entity.validation.number'),
+                }}
+              />
+              <ValidatedField
+                label={translate('storeApp.productOrderItem.totalPrice')}
+                id="order-item-totalPrice"
+                name="totalPrice"
+                data-cy="totalPrice"
+                type="text"
+                validate={{
+                  required: { value: true, message: translate('entity.validation.required') },
+                  min: { value: 0, message: translate('entity.validation.min', { min: 0 }) },
+                  validate: v => isNumber(v) || translate('entity.validation.number'),
+                }}
+              />
+              <ValidatedField
+                label={translate('storeApp.productOrderItem.status')}
+                id="order-item-status"
+                name="status"
+                data-cy="status"
+                type="select"
+              >
+                {orderItemStatusValues.map(orderItemStatus => (
+                  <option value={orderItemStatus} key={orderItemStatus}>
+                    {translate('storeApp.OrderItemStatus.' + orderItemStatus)}
+                  </option>
+                ))}
+              </ValidatedField>
+              <ValidatedField
+                id="order-item-product"
+                name="product"
+                data-cy="product"
+                label={translate('storeApp.productOrderItem.product')}
+                type="select"
+                required
+              >
+                <option value="" key="0" />
+                {products
+                  ? products.map(otherEntity => (
+                      <option value={otherEntity.id} key={otherEntity.id}>
+                        {otherEntity.name}
+                      </option>
+                    ))
+                  : null}
+              </ValidatedField>
+              <FormText>
+                <Translate contentKey="entity.validation.required">This field is required.</Translate>
+              </FormText>
+              <ValidatedField
+                id="order-item-order"
+                name="order"
+                data-cy="order"
+                label={translate('storeApp.productOrderItem.order')}
+                type="select"
+                required
+              >
+                <option value="" key="0" />
+                {productOrders
+                  ? productOrders.map(otherEntity => (
+                      <option value={otherEntity.id} key={otherEntity.id}>
+                        {otherEntity.code}
+                      </option>
+                    ))
+                  : null}
+              </ValidatedField>
+              <FormText>
+                <Translate contentKey="entity.validation.required">This field is required.</Translate>
+              </FormText>
+              <Button tag={Link} id="cancel-save" data-cy="entityCreateCancelButton" to="/order-item" replace color="info">
                 <FontAwesomeIcon icon="arrow-left" />
                 &nbsp;
                 <span className="d-none d-md-inline">
@@ -187,12 +183,12 @@ export const OrderItemUpdate = (props: IOrderItemUpdateProps) => {
                 </span>
               </Button>
               &nbsp;
-              <Button color="primary" id="save-entity" type="submit" disabled={updating}>
+              <Button color="primary" id="save-entity" data-cy="entityCreateSaveButton" type="submit" disabled={updating}>
                 <FontAwesomeIcon icon="save" />
                 &nbsp;
                 <Translate contentKey="entity.action.save">Save</Translate>
               </Button>
-            </AvForm>
+            </ValidatedForm>
           )}
         </Col>
       </Row>
@@ -200,25 +196,4 @@ export const OrderItemUpdate = (props: IOrderItemUpdateProps) => {
   );
 };
 
-const mapStateToProps = (storeState: IRootState) => ({
-  products: storeState.product.entities,
-  productOrders: storeState.productOrder.entities,
-  orderItemEntity: storeState.orderItem.entity,
-  loading: storeState.orderItem.loading,
-  updating: storeState.orderItem.updating,
-  updateSuccess: storeState.orderItem.updateSuccess,
-});
-
-const mapDispatchToProps = {
-  getProducts,
-  getProductOrders,
-  getEntity,
-  updateEntity,
-  createEntity,
-  reset,
-};
-
-type StateProps = ReturnType<typeof mapStateToProps>;
-type DispatchProps = typeof mapDispatchToProps;
-
-export default connect(mapStateToProps, mapDispatchToProps)(OrderItemUpdate);
+export default OrderItemUpdate;

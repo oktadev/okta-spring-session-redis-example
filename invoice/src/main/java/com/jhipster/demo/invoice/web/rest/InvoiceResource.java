@@ -1,12 +1,16 @@
 package com.jhipster.demo.invoice.web.rest;
 
 import com.jhipster.demo.invoice.domain.Invoice;
+import com.jhipster.demo.invoice.repository.InvoiceRepository;
 import com.jhipster.demo.invoice.service.InvoiceService;
 import com.jhipster.demo.invoice.web.rest.errors.BadRequestAlertException;
-
-import io.github.jhipster.web.util.HeaderUtil;
-import io.github.jhipster.web.util.PaginationUtil;
-import io.github.jhipster.web.util.ResponseUtil;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,15 +18,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import javax.validation.Valid;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Optional;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import tech.jhipster.web.util.HeaderUtil;
+import tech.jhipster.web.util.PaginationUtil;
+import tech.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing {@link com.jhipster.demo.invoice.domain.Invoice}.
@@ -40,8 +41,11 @@ public class InvoiceResource {
 
     private final InvoiceService invoiceService;
 
-    public InvoiceResource(InvoiceService invoiceService) {
+    private final InvoiceRepository invoiceRepository;
+
+    public InvoiceResource(InvoiceService invoiceService, InvoiceRepository invoiceRepository) {
         this.invoiceService = invoiceService;
+        this.invoiceRepository = invoiceRepository;
     }
 
     /**
@@ -58,30 +62,80 @@ public class InvoiceResource {
             throw new BadRequestAlertException("A new invoice cannot already have an ID", ENTITY_NAME, "idexists");
         }
         Invoice result = invoiceService.save(invoice);
-        return ResponseEntity.created(new URI("/api/invoices/" + result.getId()))
+        return ResponseEntity
+            .created(new URI("/api/invoices/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString()))
             .body(result);
     }
 
     /**
-     * {@code PUT  /invoices} : Updates an existing invoice.
+     * {@code PUT  /invoices/:id} : Updates an existing invoice.
      *
+     * @param id the id of the invoice to save.
      * @param invoice the invoice to update.
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the updated invoice,
      * or with status {@code 400 (Bad Request)} if the invoice is not valid,
      * or with status {@code 500 (Internal Server Error)} if the invoice couldn't be updated.
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
-    @PutMapping("/invoices")
-    public ResponseEntity<Invoice> updateInvoice(@Valid @RequestBody Invoice invoice) throws URISyntaxException {
-        log.debug("REST request to update Invoice : {}", invoice);
+    @PutMapping("/invoices/{id}")
+    public ResponseEntity<Invoice> updateInvoice(
+        @PathVariable(value = "id", required = false) final Long id,
+        @Valid @RequestBody Invoice invoice
+    ) throws URISyntaxException {
+        log.debug("REST request to update Invoice : {}, {}", id, invoice);
         if (invoice.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
+        if (!Objects.equals(id, invoice.getId())) {
+            throw new BadRequestAlertException("Invalid ID", ENTITY_NAME, "idinvalid");
+        }
+
+        if (!invoiceRepository.existsById(id)) {
+            throw new BadRequestAlertException("Entity not found", ENTITY_NAME, "idnotfound");
+        }
+
         Invoice result = invoiceService.save(invoice);
-        return ResponseEntity.ok()
+        return ResponseEntity
+            .ok()
             .headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, invoice.getId().toString()))
             .body(result);
+    }
+
+    /**
+     * {@code PATCH  /invoices/:id} : Partial updates given fields of an existing invoice, field will ignore if it is null
+     *
+     * @param id the id of the invoice to save.
+     * @param invoice the invoice to update.
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the updated invoice,
+     * or with status {@code 400 (Bad Request)} if the invoice is not valid,
+     * or with status {@code 404 (Not Found)} if the invoice is not found,
+     * or with status {@code 500 (Internal Server Error)} if the invoice couldn't be updated.
+     * @throws URISyntaxException if the Location URI syntax is incorrect.
+     */
+    @PatchMapping(value = "/invoices/{id}", consumes = { "application/json", "application/merge-patch+json" })
+    public ResponseEntity<Invoice> partialUpdateInvoice(
+        @PathVariable(value = "id", required = false) final Long id,
+        @NotNull @RequestBody Invoice invoice
+    ) throws URISyntaxException {
+        log.debug("REST request to partial update Invoice partially : {}, {}", id, invoice);
+        if (invoice.getId() == null) {
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
+        }
+        if (!Objects.equals(id, invoice.getId())) {
+            throw new BadRequestAlertException("Invalid ID", ENTITY_NAME, "idinvalid");
+        }
+
+        if (!invoiceRepository.existsById(id)) {
+            throw new BadRequestAlertException("Entity not found", ENTITY_NAME, "idnotfound");
+        }
+
+        Optional<Invoice> result = invoiceService.partialUpdate(invoice);
+
+        return ResponseUtil.wrapOrNotFound(
+            result,
+            HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, invoice.getId().toString())
+        );
     }
 
     /**
@@ -91,7 +145,7 @@ public class InvoiceResource {
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of invoices in body.
      */
     @GetMapping("/invoices")
-    public ResponseEntity<List<Invoice>> getAllInvoices(Pageable pageable) {
+    public ResponseEntity<List<Invoice>> getAllInvoices(@org.springdoc.api.annotations.ParameterObject Pageable pageable) {
         log.debug("REST request to get a page of Invoices");
         Page<Invoice> page = invoiceService.findAll(pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
@@ -121,6 +175,9 @@ public class InvoiceResource {
     public ResponseEntity<Void> deleteInvoice(@PathVariable Long id) {
         log.debug("REST request to delete Invoice : {}", id);
         invoiceService.delete(id);
-        return ResponseEntity.noContent().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
+        return ResponseEntity
+            .noContent()
+            .headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString()))
+            .build();
     }
 }

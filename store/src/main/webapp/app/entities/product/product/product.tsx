@@ -1,35 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { connect } from 'react-redux';
 import { Link, RouteComponentProps } from 'react-router-dom';
-import { Button, Col, Row, Table } from 'reactstrap';
-import {
-  openFile,
-  byteSize,
-  Translate,
-  ICrudGetAllAction,
-  getSortState,
-  IPaginationBaseState,
-  JhiPagination,
-  JhiItemCount,
-} from 'react-jhipster';
+import { Button, Table } from 'reactstrap';
+import { openFile, byteSize, Translate, getSortState, JhiPagination, JhiItemCount } from 'react-jhipster';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-import { IRootState } from 'app/shared/reducers';
 import { getEntities } from './product.reducer';
 import { IProduct } from 'app/shared/model/product/product.model';
 import { APP_DATE_FORMAT, APP_LOCAL_DATE_FORMAT } from 'app/config/constants';
-import { ITEMS_PER_PAGE } from 'app/shared/util/pagination.constants';
+import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/shared/util/pagination.constants';
 import { overridePaginationStateWithQueryParams } from 'app/shared/util/entity-utils';
+import { useAppDispatch, useAppSelector } from 'app/config/store';
 
-export interface IProductProps extends StateProps, DispatchProps, RouteComponentProps<{ url: string }> {}
+export const Product = (props: RouteComponentProps<{ url: string }>) => {
+  const dispatch = useAppDispatch();
 
-export const Product = (props: IProductProps) => {
   const [paginationState, setPaginationState] = useState(
-    overridePaginationStateWithQueryParams(getSortState(props.location, ITEMS_PER_PAGE), props.location.search)
+    overridePaginationStateWithQueryParams(getSortState(props.location, ITEMS_PER_PAGE, 'id'), props.location.search)
   );
 
+  const productList = useAppSelector(state => state.product.entities);
+  const loading = useAppSelector(state => state.product.loading);
+  const totalItems = useAppSelector(state => state.product.totalItems);
+
   const getAllEntities = () => {
-    props.getEntities(paginationState.activePage - 1, paginationState.itemsPerPage, `${paginationState.sort},${paginationState.order}`);
+    dispatch(
+      getEntities({
+        page: paginationState.activePage - 1,
+        size: paginationState.itemsPerPage,
+        sort: `${paginationState.sort},${paginationState.order}`,
+      })
+    );
   };
 
   const sortEntities = () => {
@@ -47,7 +47,7 @@ export const Product = (props: IProductProps) => {
   useEffect(() => {
     const params = new URLSearchParams(props.location.search);
     const page = params.get('page');
-    const sort = params.get('sort');
+    const sort = params.get(SORT);
     if (page && sort) {
       const sortSplit = sort.split(',');
       setPaginationState({
@@ -62,7 +62,7 @@ export const Product = (props: IProductProps) => {
   const sort = p => () => {
     setPaginationState({
       ...paginationState,
-      order: paginationState.order === 'asc' ? 'desc' : 'asc',
+      order: paginationState.order === ASC ? DESC : ASC,
       sort: p,
     });
   };
@@ -73,16 +73,27 @@ export const Product = (props: IProductProps) => {
       activePage: currentPage,
     });
 
-  const { productList, match, loading, totalItems } = props;
+  const handleSyncList = () => {
+    sortEntities();
+  };
+
+  const { match } = props;
+
   return (
     <div>
-      <h2 id="product-heading">
+      <h2 id="product-heading" data-cy="ProductHeading">
         <Translate contentKey="storeApp.productProduct.home.title">Products</Translate>
-        <Link to={`${match.url}/new`} className="btn btn-primary float-right jh-create-entity" id="jh-create-entity">
-          <FontAwesomeIcon icon="plus" />
-          &nbsp;
-          <Translate contentKey="storeApp.productProduct.home.createLabel">Create new Product</Translate>
-        </Link>
+        <div className="d-flex justify-content-end">
+          <Button className="me-2" color="info" onClick={handleSyncList} disabled={loading}>
+            <FontAwesomeIcon icon="sync" spin={loading} />{' '}
+            <Translate contentKey="storeApp.productProduct.home.refreshListLabel">Refresh List</Translate>
+          </Button>
+          <Link to={`${match.url}/new`} className="btn btn-primary jh-create-entity" id="jh-create-entity" data-cy="entityCreateButton">
+            <FontAwesomeIcon icon="plus" />
+            &nbsp;
+            <Translate contentKey="storeApp.productProduct.home.createLabel">Create new Product</Translate>
+          </Link>
+        </div>
       </h2>
       <div className="table-responsive">
         {productList && productList.length > 0 ? (
@@ -90,7 +101,7 @@ export const Product = (props: IProductProps) => {
             <thead>
               <tr>
                 <th className="hand" onClick={sort('id')}>
-                  <Translate contentKey="global.field.id">ID</Translate> <FontAwesomeIcon icon="sort" />
+                  <Translate contentKey="storeApp.productProduct.id">ID</Translate> <FontAwesomeIcon icon="sort" />
                 </th>
                 <th className="hand" onClick={sort('name')}>
                   <Translate contentKey="storeApp.productProduct.name">Name</Translate> <FontAwesomeIcon icon="sort" />
@@ -101,8 +112,8 @@ export const Product = (props: IProductProps) => {
                 <th className="hand" onClick={sort('price')}>
                   <Translate contentKey="storeApp.productProduct.price">Price</Translate> <FontAwesomeIcon icon="sort" />
                 </th>
-                <th className="hand" onClick={sort('size')}>
-                  <Translate contentKey="storeApp.productProduct.size">Size</Translate> <FontAwesomeIcon icon="sort" />
+                <th className="hand" onClick={sort('productSize')}>
+                  <Translate contentKey="storeApp.productProduct.productSize">Product Size</Translate> <FontAwesomeIcon icon="sort" />
                 </th>
                 <th className="hand" onClick={sort('image')}>
                   <Translate contentKey="storeApp.productProduct.image">Image</Translate> <FontAwesomeIcon icon="sort" />
@@ -116,7 +127,7 @@ export const Product = (props: IProductProps) => {
             </thead>
             <tbody>
               {productList.map((product, i) => (
-                <tr key={`entity-${i}`}>
+                <tr key={`entity-${i}`} data-cy="entityTable">
                   <td>
                     <Button tag={Link} to={`${match.url}/${product.id}`} color="link" size="sm">
                       {product.id}
@@ -126,7 +137,7 @@ export const Product = (props: IProductProps) => {
                   <td>{product.description}</td>
                   <td>{product.price}</td>
                   <td>
-                    <Translate contentKey={`storeApp.Size.${product.size}`} />
+                    <Translate contentKey={`storeApp.Size.${product.productSize}`} />
                   </td>
                   <td>
                     {product.image ? (
@@ -150,9 +161,9 @@ export const Product = (props: IProductProps) => {
                       ''
                     )}
                   </td>
-                  <td className="text-right">
+                  <td className="text-end">
                     <div className="btn-group flex-btn-group-container">
-                      <Button tag={Link} to={`${match.url}/${product.id}`} color="info" size="sm">
+                      <Button tag={Link} to={`${match.url}/${product.id}`} color="info" size="sm" data-cy="entityDetailsButton">
                         <FontAwesomeIcon icon="eye" />{' '}
                         <span className="d-none d-md-inline">
                           <Translate contentKey="entity.action.view">View</Translate>
@@ -163,6 +174,7 @@ export const Product = (props: IProductProps) => {
                         to={`${match.url}/${product.id}/edit?page=${paginationState.activePage}&sort=${paginationState.sort},${paginationState.order}`}
                         color="primary"
                         size="sm"
+                        data-cy="entityEditButton"
                       >
                         <FontAwesomeIcon icon="pencil-alt" />{' '}
                         <span className="d-none d-md-inline">
@@ -174,6 +186,7 @@ export const Product = (props: IProductProps) => {
                         to={`${match.url}/${product.id}/delete?page=${paginationState.activePage}&sort=${paginationState.sort},${paginationState.order}`}
                         color="danger"
                         size="sm"
+                        data-cy="entityDeleteButton"
                       >
                         <FontAwesomeIcon icon="trash" />{' '}
                         <span className="d-none d-md-inline">
@@ -194,20 +207,20 @@ export const Product = (props: IProductProps) => {
           )
         )}
       </div>
-      {props.totalItems ? (
+      {totalItems ? (
         <div className={productList && productList.length > 0 ? '' : 'd-none'}>
-          <Row className="justify-content-center">
+          <div className="justify-content-center d-flex">
             <JhiItemCount page={paginationState.activePage} total={totalItems} itemsPerPage={paginationState.itemsPerPage} i18nEnabled />
-          </Row>
-          <Row className="justify-content-center">
+          </div>
+          <div className="justify-content-center d-flex">
             <JhiPagination
               activePage={paginationState.activePage}
               onSelect={handlePagination}
               maxButtons={5}
               itemsPerPage={paginationState.itemsPerPage}
-              totalItems={props.totalItems}
+              totalItems={totalItems}
             />
-          </Row>
+          </div>
         </div>
       ) : (
         ''
@@ -216,17 +229,4 @@ export const Product = (props: IProductProps) => {
   );
 };
 
-const mapStateToProps = ({ product }: IRootState) => ({
-  productList: product.entities,
-  loading: product.loading,
-  totalItems: product.totalItems,
-});
-
-const mapDispatchToProps = {
-  getEntities,
-};
-
-type StateProps = ReturnType<typeof mapStateToProps>;
-type DispatchProps = typeof mapDispatchToProps;
-
-export default connect(mapStateToProps, mapDispatchToProps)(Product);
+export default Product;

@@ -1,5 +1,11 @@
 {
-  "name": "Invoice",
+  "applications": ["store", "invoice"],
+  "changelogDate": "20220304050240",
+  "clientRootFolder": "invoice",
+  "databaseType": "sql",
+  "dto": "no",
+  "embedded": false,
+  "entityTableName": "invoice",
   "fields": [
     {
       "fieldName": "code",
@@ -18,14 +24,14 @@
     {
       "fieldName": "status",
       "fieldType": "InvoiceStatus",
-      "fieldValues": "PAID,ISSUED,CANCELLED",
-      "fieldValidateRules": ["required"]
+      "fieldValidateRules": ["required"],
+      "fieldValues": "PAID,ISSUED,CANCELLED"
     },
     {
       "fieldName": "paymentMethod",
       "fieldType": "PaymentMethod",
-      "fieldValues": "CREDIT_CARD,CASH_ON_DELIVERY,PAYPAL",
-      "fieldValidateRules": ["required"]
+      "fieldValidateRules": ["required"],
+      "fieldValues": "CREDIT_CARD,CASH_ON_DELIVERY,PAYPAL"
     },
     {
       "fieldName": "paymentDate",
@@ -38,24 +44,19 @@
       "fieldValidateRules": ["required"]
     }
   ],
+  "fluentMethods": true,
+  "jpaMetamodelFiltering": false,
+  "microserviceName": "invoice",
+  "name": "Invoice",
+  "pagination": "pagination",
+  "readOnly": false,
   "relationships": [
     {
-      "relationshipType": "one-to-many",
       "otherEntityName": "shipment",
       "otherEntityRelationshipName": "invoice",
-      "relationshipName": "shipment"
+      "relationshipName": "shipment",
+      "relationshipType": "one-to-many"
     }
   ],
-  "changelogDate": "20201208033155",
-  "entityTableName": "invoice",
-  "dto": "no",
-  "pagination": "pagination",
-  "service": "serviceClass",
-  "jpaMetamodelFiltering": false,
-  "fluentMethods": true,
-  "readOnly": false,
-  "embedded": false,
-  "clientRootFolder": "",
-  "applications": ["store", "invoice"],
-  "microserviceName": "invoice"
+  "service": "serviceClass"
 }

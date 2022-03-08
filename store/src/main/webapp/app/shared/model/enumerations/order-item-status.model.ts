@@ -1,4 +1,4 @@
-export const enum OrderItemStatus {
+export enum OrderItemStatus {
   AVAILABLE = 'AVAILABLE',
 
   OUT_OF_STOCK = 'OUT_OF_STOCK',

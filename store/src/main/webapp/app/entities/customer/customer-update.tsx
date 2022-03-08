@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { connect } from 'react-redux';
 import { Link, RouteComponentProps } from 'react-router-dom';
-import { Button, Row, Col, Label } from 'reactstrap';
-import { AvFeedback, AvForm, AvGroup, AvInput, AvField } from 'availity-reactstrap-validation';
-import { Translate, translate, ICrudGetAction, ICrudGetAllAction, ICrudPutAction } from 'react-jhipster';
+import { Button, Row, Col, FormText } from 'reactstrap';
+import { isNumber, Translate, translate, ValidatedField, ValidatedForm } from 'react-jhipster';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { IRootState } from 'app/shared/reducers';
 
 import { IUser } from 'app/shared/model/user.model';
 import { getUsers } from 'app/shared/reducers/user-management';
@@ -13,56 +10,68 @@ import { getEntity, updateEntity, createEntity, reset } from './customer.reducer
 import { ICustomer } from 'app/shared/model/customer.model';
 import { convertDateTimeFromServer, convertDateTimeToServer, displayDefaultDateTime } from 'app/shared/util/date-utils';
 import { mapIdList } from 'app/shared/util/entity-utils';
+import { useAppDispatch, useAppSelector } from 'app/config/store';
+import { Gender } from 'app/shared/model/enumerations/gender.model';
 
-export interface ICustomerUpdateProps extends StateProps, DispatchProps, RouteComponentProps<{ id: string }> {}
+export const CustomerUpdate = (props: RouteComponentProps<{ id: string }>) => {
+  const dispatch = useAppDispatch();
 
-export const CustomerUpdate = (props: ICustomerUpdateProps) => {
-  const [userId, setUserId] = useState('0');
-  const [isNew, setIsNew] = useState(!props.match.params || !props.match.params.id);
+  const [isNew] = useState(!props.match.params || !props.match.params.id);
 
-  const { customerEntity, users, loading, updating } = props;
-
+  const users = useAppSelector(state => state.userManagement.users);
+  const customerEntity = useAppSelector(state => state.customer.entity);
+  const loading = useAppSelector(state => state.customer.loading);
+  const updating = useAppSelector(state => state.customer.updating);
+  const updateSuccess = useAppSelector(state => state.customer.updateSuccess);
+  const genderValues = Object.keys(Gender);
   const handleClose = () => {
     props.history.push('/customer' + props.location.search);
   };
 
   useEffect(() => {
     if (isNew) {
-      props.reset();
+      dispatch(reset());
     } else {
-      props.getEntity(props.match.params.id);
+      dispatch(getEntity(props.match.params.id));
     }
 
-    props.getUsers();
+    dispatch(getUsers({}));
   }, []);
 
   useEffect(() => {
-    if (props.updateSuccess) {
+    if (updateSuccess) {
       handleClose();
     }
-  }, [props.updateSuccess]);
+  }, [updateSuccess]);
 
-  const saveEntity = (event, errors, values) => {
-    if (errors.length === 0) {
-      const entity = {
-        ...customerEntity,
-        ...values,
-      };
-      entity.user = users.find(user => user.id.toString() === values.user.id.toString());
+  const saveEntity = values => {
+    const entity = {
+      ...customerEntity,
+      ...values,
+      user: users.find(it => it.id.toString() === values.user.toString()),
+    };
 
-      if (isNew) {
-        props.createEntity(entity);
-      } else {
-        props.updateEntity(entity);
-      }
+    if (isNew) {
+      dispatch(createEntity(entity));
+    } else {
+      dispatch(updateEntity(entity));
     }
   };
+
+  const defaultValues = () =>
+    isNew
+      ? {}
+      : {
+          gender: 'MALE',
+          ...customerEntity,
+          user: customerEntity?.user?.id,
+        };
 
   return (
     <div>
       <Row className="justify-content-center">
         <Col md="8">
-          <h2 id="storeApp.customer.home.createOrEditLabel">
+          <h2 id="storeApp.customer.home.createOrEditLabel" data-cy="CustomerCreateUpdateHeading">
             <Translate contentKey="storeApp.customer.home.createOrEditLabel">Create or edit a Customer</Translate>
           </h2>
         </Col>
@@ -72,157 +81,132 @@ export const CustomerUpdate = (props: ICustomerUpdateProps) => {
           {loading ? (
             <p>Loading...</p>
           ) : (
-            <AvForm model={isNew ? {} : customerEntity} onSubmit={saveEntity}>
+            <ValidatedForm defaultValues={defaultValues()} onSubmit={saveEntity}>
               {!isNew ? (
-                <AvGroup>
-                  <Label for="customer-id">
-                    <Translate contentKey="global.field.id">ID</Translate>
-                  </Label>
-                  <AvInput id="customer-id" type="text" className="form-control" name="id" required readOnly />
-                </AvGroup>
-              ) : null}
-              <AvGroup>
-                <Label id="firstNameLabel" for="customer-firstName">
-                  <Translate contentKey="storeApp.customer.firstName">First Name</Translate>
-                </Label>
-                <AvField
-                  id="customer-firstName"
-                  type="text"
-                  name="firstName"
-                  validate={{
-                    required: { value: true, errorMessage: translate('entity.validation.required') },
-                  }}
-                />
-              </AvGroup>
-              <AvGroup>
-                <Label id="lastNameLabel" for="customer-lastName">
-                  <Translate contentKey="storeApp.customer.lastName">Last Name</Translate>
-                </Label>
-                <AvField
-                  id="customer-lastName"
-                  type="text"
-                  name="lastName"
-                  validate={{
-                    required: { value: true, errorMessage: translate('entity.validation.required') },
-                  }}
-                />
-              </AvGroup>
-              <AvGroup>
-                <Label id="genderLabel" for="customer-gender">
-                  <Translate contentKey="storeApp.customer.gender">Gender</Translate>
-                </Label>
-                <AvInput
-                  id="customer-gender"
-                  type="select"
-                  className="form-control"
-                  name="gender"
-                  value={(!isNew && customerEntity.gender) || 'MALE'}
-                >
-                  <option value="MALE">{translate('storeApp.Gender.MALE')}</option>
-                  <option value="FEMALE">{translate('storeApp.Gender.FEMALE')}</option>
-                  <option value="OTHER">{translate('storeApp.Gender.OTHER')}</option>
-                </AvInput>
-              </AvGroup>
-              <AvGroup>
-                <Label id="emailLabel" for="customer-email">
-                  <Translate contentKey="storeApp.customer.email">Email</Translate>
-                </Label>
-                <AvField
-                  id="customer-email"
-                  type="text"
-                  name="email"
-                  validate={{
-                    required: { value: true, errorMessage: translate('entity.validation.required') },
-                    pattern: {
-                      value: '^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$',
-                      errorMessage: translate('entity.validation.pattern', { pattern: '^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$' }),
-                    },
-                  }}
-                />
-              </AvGroup>
-              <AvGroup>
-                <Label id="phoneLabel" for="customer-phone">
-                  <Translate contentKey="storeApp.customer.phone">Phone</Translate>
-                </Label>
-                <AvField
-                  id="customer-phone"
-                  type="text"
-                  name="phone"
-                  validate={{
-                    required: { value: true, errorMessage: translate('entity.validation.required') },
-                  }}
-                />
-              </AvGroup>
-              <AvGroup>
-                <Label id="addressLine1Label" for="customer-addressLine1">
-                  <Translate contentKey="storeApp.customer.addressLine1">Address Line 1</Translate>
-                </Label>
-                <AvField
-                  id="customer-addressLine1"
-                  type="text"
-                  name="addressLine1"
-                  validate={{
-                    required: { value: true, errorMessage: translate('entity.validation.required') },
-                  }}
-                />
-              </AvGroup>
-              <AvGroup>
-                <Label id="addressLine2Label" for="customer-addressLine2">
-                  <Translate contentKey="storeApp.customer.addressLine2">Address Line 2</Translate>
-                </Label>
-                <AvField id="customer-addressLine2" type="text" name="addressLine2" />
-              </AvGroup>
-              <AvGroup>
-                <Label id="cityLabel" for="customer-city">
-                  <Translate contentKey="storeApp.customer.city">City</Translate>
-                </Label>
-                <AvField
-                  id="customer-city"
-                  type="text"
-                  name="city"
-                  validate={{
-                    required: { value: true, errorMessage: translate('entity.validation.required') },
-                  }}
-                />
-              </AvGroup>
-              <AvGroup>
-                <Label id="countryLabel" for="customer-country">
-                  <Translate contentKey="storeApp.customer.country">Country</Translate>
-                </Label>
-                <AvField
-                  id="customer-country"
-                  type="text"
-                  name="country"
-                  validate={{
-                    required: { value: true, errorMessage: translate('entity.validation.required') },
-                  }}
-                />
-              </AvGroup>
-              <AvGroup>
-                <Label for="customer-user">
-                  <Translate contentKey="storeApp.customer.user">User</Translate>
-                </Label>
-                <AvInput
-                  id="customer-user"
-                  type="select"
-                  className="form-control"
-                  name="user.id"
-                  value={isNew ? users[0] && users[0].id : customerEntity.user?.id}
+                <ValidatedField
+                  name="id"
                   required
-                >
-                  {users
-                    ? users.map(otherEntity => (
-                        <option value={otherEntity.id} key={otherEntity.id}>
-                          {otherEntity.login}
-                        </option>
-                      ))
-                    : null}
-                </AvInput>
-                <AvFeedback>
-                  <Translate contentKey="entity.validation.required">This field is required.</Translate>
-                </AvFeedback>
-              </AvGroup>
-              <Button tag={Link} id="cancel-save" to="/customer" replace color="info">
+                  readOnly
+                  id="customer-id"
+                  label={translate('global.field.id')}
+                  validate={{ required: true }}
+                />
+              ) : null}
+              <ValidatedField
+                label={translate('storeApp.customer.firstName')}
+                id="customer-firstName"
+                name="firstName"
+                data-cy="firstName"
+                type="text"
+                validate={{
+                  required: { value: true, message: translate('entity.validation.required') },
+                }}
+              />
+              <ValidatedField
+                label={translate('storeApp.customer.lastName')}
+                id="customer-lastName"
+                name="lastName"
+                data-cy="lastName"
+                type="text"
+                validate={{
+                  required: { value: true, message: translate('entity.validation.required') },
+                }}
+              />
+              <ValidatedField
+                label={translate('storeApp.customer.gender')}
+                id="customer-gender"
+                name="gender"
+                data-cy="gender"
+                type="select"
+              >
+                {genderValues.map(gender => (
+                  <option value={gender} key={gender}>
+                    {translate('storeApp.Gender.' + gender)}
+                  </option>
+                ))}
+              </ValidatedField>
+              <ValidatedField
+                label={translate('storeApp.customer.email')}
+                id="customer-email"
+                name="email"
+                data-cy="email"
+                type="text"
+                validate={{
+                  required: { value: true, message: translate('entity.validation.required') },
+                  pattern: {
+                    value: /^[^@\s]+@[^@\s]+\.[^@\s]+$/,
+                    message: translate('entity.validation.pattern', { pattern: '^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$' }),
+                  },
+                }}
+              />
+              <ValidatedField
+                label={translate('storeApp.customer.phone')}
+                id="customer-phone"
+                name="phone"
+                data-cy="phone"
+                type="text"
+                validate={{
+                  required: { value: true, message: translate('entity.validation.required') },
+                }}
+              />
+              <ValidatedField
+                label={translate('storeApp.customer.addressLine1')}
+                id="customer-addressLine1"
+                name="addressLine1"
+                data-cy="addressLine1"
+                type="text"
+                validate={{
+                  required: { value: true, message: translate('entity.validation.required') },
+                }}
+              />
+              <ValidatedField
+                label={translate('storeApp.customer.addressLine2')}
+                id="customer-addressLine2"
+                name="addressLine2"
+                data-cy="addressLine2"
+                type="text"
+              />
+              <ValidatedField
+                label={translate('storeApp.customer.city')}
+                id="customer-city"
+                name="city"
+                data-cy="city"
+                type="text"
+                validate={{
+                  required: { value: true, message: translate('entity.validation.required') },
+                }}
+              />
+              <ValidatedField
+                label={translate('storeApp.customer.country')}
+                id="customer-country"
+                name="country"
+                data-cy="country"
+                type="text"
+                validate={{
+                  required: { value: true, message: translate('entity.validation.required') },
+                }}
+              />
+              <ValidatedField
+                id="customer-user"
+                name="user"
+                data-cy="user"
+                label={translate('storeApp.customer.user')}
+                type="select"
+                required
+              >
+                <option value="" key="0" />
+                {users
+                  ? users.map(otherEntity => (
+                      <option value={otherEntity.id} key={otherEntity.id}>
+                        {otherEntity.login}
+                      </option>
+                    ))
+                  : null}
+              </ValidatedField>
+              <FormText>
+                <Translate contentKey="entity.validation.required">This field is required.</Translate>
+              </FormText>
+              <Button tag={Link} id="cancel-save" data-cy="entityCreateCancelButton" to="/customer" replace color="info">
                 <FontAwesomeIcon icon="arrow-left" />
                 &nbsp;
                 <span className="d-none d-md-inline">
@@ -230,12 +214,12 @@ export const CustomerUpdate = (props: ICustomerUpdateProps) => {
                 </span>
               </Button>
               &nbsp;
-              <Button color="primary" id="save-entity" type="submit" disabled={updating}>
+              <Button color="primary" id="save-entity" data-cy="entityCreateSaveButton" type="submit" disabled={updating}>
                 <FontAwesomeIcon icon="save" />
                 &nbsp;
                 <Translate contentKey="entity.action.save">Save</Translate>
               </Button>
-            </AvForm>
+            </ValidatedForm>
           )}
         </Col>
       </Row>
@@ -243,23 +227,4 @@ export const CustomerUpdate = (props: ICustomerUpdateProps) => {
   );
 };
 
-const mapStateToProps = (storeState: IRootState) => ({
-  users: storeState.userManagement.users,
-  customerEntity: storeState.customer.entity,
-  loading: storeState.customer.loading,
-  updating: storeState.customer.updating,
-  updateSuccess: storeState.customer.updateSuccess,
-});
-
-const mapDispatchToProps = {
-  getUsers,
-  getEntity,
-  updateEntity,
-  createEntity,
-  reset,
-};
-
-type StateProps = ReturnType<typeof mapStateToProps>;
-type DispatchProps = typeof mapDispatchToProps;
-
-export default connect(mapStateToProps, mapDispatchToProps)(CustomerUpdate);
+export default CustomerUpdate;

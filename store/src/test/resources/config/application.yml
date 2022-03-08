@@ -26,42 +26,32 @@ spring:
     #active: testcontainers
   application:
     name: store
-  datasource:
-    type: com.zaxxer.hikari.HikariDataSource
-    url: jdbc:h2:mem:store;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    name:
-    username:
-    password:
-    hikari:
-      auto-commit: false
+  autoconfigure:
+    exclude:
+      - org.springframework.cloud.gateway.config.GatewayMetricsAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+  session:
+    store-type: none
+  cloud:
+    config:
+      enabled: false
   jackson:
     serialization:
       write-durations-as-timestamps: false
-  jpa:
-    database-platform: io.github.jhipster.domain.util.FixedH2Dialect
-    open-in-view: false
-    show-sql: false
-    hibernate:
-      ddl-auto: none
-      naming:
-        physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
-        implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
-    properties:
-      hibernate.id.new_generator_mappings: true
-      hibernate.connection.provider_disables_autocommit: true
-      hibernate.cache.use_second_level_cache: false
-      hibernate.cache.use_query_cache: false
-      hibernate.generate_statistics: false
-      hibernate.hbm2ddl.auto: validate
-      hibernate.jdbc.time_zone: UTC
   liquibase:
     contexts: test
+    url: jdbc:h2:mem:store;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
   mail:
     host: localhost
   main:
     allow-bean-definition-overriding: true
+    allow-circular-references: true
   messages:
     basename: i18n/messages
+  r2dbc:
+    url: r2dbc:h2:mem:///store;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: r2dbc
+    password:
   task:
     execution:
       thread-name-prefix: store-task-
@@ -75,11 +65,6 @@ spring:
         size: 1
   thymeleaf:
     mode: HTML
-  session:
-    store-type: none
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
   # Allow SecurityConfiguration to initialize w/o specifying an empty issuer-uri is OK
   security:
     oauth2:
@@ -112,11 +97,6 @@ jhipster:
   mail:
     from: test@localhost
     base-url: http://127.0.0.1:8080
-  metrics:
-    logs: # Reports metrics in the logs
-      enabled: true
-      report-frequency: 60 # in seconds
-
 # ===================================================================
 # Application specific properties
 # Add your own application properties here, see the ApplicationProperties class

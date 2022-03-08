@@ -1,30 +1,34 @@
 import React, { useEffect } from 'react';
-import { connect } from 'react-redux';
 import { Link, RouteComponentProps } from 'react-router-dom';
 import { Button, Row, Col } from 'reactstrap';
-import { Translate, ICrudGetAction, openFile, byteSize } from 'react-jhipster';
+import { Translate, openFile, byteSize } from 'react-jhipster';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-import { IRootState } from 'app/shared/reducers';
 import { getEntity } from './product.reducer';
-import { IProduct } from 'app/shared/model/product/product.model';
 import { APP_DATE_FORMAT, APP_LOCAL_DATE_FORMAT } from 'app/config/constants';
+import { useAppDispatch, useAppSelector } from 'app/config/store';
 
-export interface IProductDetailProps extends StateProps, DispatchProps, RouteComponentProps<{ id: string }> {}
+export const ProductDetail = (props: RouteComponentProps<{ id: string }>) => {
+  const dispatch = useAppDispatch();
 
-export const ProductDetail = (props: IProductDetailProps) => {
   useEffect(() => {
-    props.getEntity(props.match.params.id);
+    dispatch(getEntity(props.match.params.id));
   }, []);
 
-  const { productEntity } = props;
+  const productEntity = useAppSelector(state => state.product.entity);
   return (
     <Row>
       <Col md="8">
-        <h2>
-          <Translate contentKey="storeApp.productProduct.detail.title">Product</Translate> [<b>{productEntity.id}</b>]
+        <h2 data-cy="productDetailsHeading">
+          <Translate contentKey="storeApp.productProduct.detail.title">Product</Translate>
         </h2>
         <dl className="jh-entity-details">
+          <dt>
+            <span id="id">
+              <Translate contentKey="global.field.id">ID</Translate>
+            </span>
+          </dt>
+          <dd>{productEntity.id}</dd>
           <dt>
             <span id="name">
               <Translate contentKey="storeApp.productProduct.name">Name</Translate>
@@ -44,11 +48,11 @@ export const ProductDetail = (props: IProductDetailProps) => {
           </dt>
           <dd>{productEntity.price}</dd>
           <dt>
-            <span id="size">
-              <Translate contentKey="storeApp.productProduct.size">Size</Translate>
+            <span id="productSize">
+              <Translate contentKey="storeApp.productProduct.productSize">Product Size</Translate>
             </span>
           </dt>
-          <dd>{productEntity.size}</dd>
+          <dd>{productEntity.productSize}</dd>
           <dt>
             <span id="image">
               <Translate contentKey="storeApp.productProduct.image">Image</Translate>
@@ -73,7 +77,7 @@ export const ProductDetail = (props: IProductDetailProps) => {
           </dt>
           <dd>{productEntity.productCategory ? productEntity.productCategory.name : ''}</dd>
         </dl>
-        <Button tag={Link} to="/product" replace color="info">
+        <Button tag={Link} to="/product" replace color="info" data-cy="entityDetailsBackButton">
           <FontAwesomeIcon icon="arrow-left" />{' '}
           <span className="d-none d-md-inline">
             <Translate contentKey="entity.action.back">Back</Translate>
@@ -91,13 +95,4 @@ export const ProductDetail = (props: IProductDetailProps) => {
   );
 };
 
-const mapStateToProps = ({ product }: IRootState) => ({
-  productEntity: product.entity,
-});
-
-const mapDispatchToProps = { getEntity };
-
-type StateProps = ReturnType<typeof mapStateToProps>;
-type DispatchProps = typeof mapDispatchToProps;
-
-export default connect(mapStateToProps, mapDispatchToProps)(ProductDetail);
+export default ProductDetail;

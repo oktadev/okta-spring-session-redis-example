@@ -2,15 +2,13 @@ package com.jhipster.demo.product.service;
 
 import com.jhipster.demo.product.domain.ProductOrder;
 import com.jhipster.demo.product.repository.ProductOrderRepository;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Optional;
 
 /**
  * Service Implementation for managing {@link ProductOrder}.
@@ -39,6 +37,39 @@ public class ProductOrderService {
     }
 
     /**
+     * Partially update a productOrder.
+     *
+     * @param productOrder the entity to update partially.
+     * @return the persisted entity.
+     */
+    public Optional<ProductOrder> partialUpdate(ProductOrder productOrder) {
+        log.debug("Request to partially update ProductOrder : {}", productOrder);
+
+        return productOrderRepository
+            .findById(productOrder.getId())
+            .map(existingProductOrder -> {
+                if (productOrder.getPlacedDate() != null) {
+                    existingProductOrder.setPlacedDate(productOrder.getPlacedDate());
+                }
+                if (productOrder.getStatus() != null) {
+                    existingProductOrder.setStatus(productOrder.getStatus());
+                }
+                if (productOrder.getCode() != null) {
+                    existingProductOrder.setCode(productOrder.getCode());
+                }
+                if (productOrder.getInvoiceId() != null) {
+                    existingProductOrder.setInvoiceId(productOrder.getInvoiceId());
+                }
+                if (productOrder.getCustomer() != null) {
+                    existingProductOrder.setCustomer(productOrder.getCustomer());
+                }
+
+                return existingProductOrder;
+            })
+            .map(productOrderRepository::save);
+    }
+
+    /**
      * Get all the productOrders.
      *
      * @param pageable the pagination information.
@@ -49,7 +80,6 @@ public class ProductOrderService {
         log.debug("Request to get all ProductOrders");
         return productOrderRepository.findAll(pageable);
     }
-
 
     /**
      * Get one productOrder by id.

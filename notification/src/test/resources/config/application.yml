@@ -20,21 +20,32 @@ eureka:
     appname: notification
     instanceId: notification:${spring.application.instance-id:${random.value}}
 
+mongock:
+  migration-scan-package:
+    - com.jhipster.demo.notification.config.dbmigrations
+  mongo-db:
+    read-concern: local
+    write-concern:
+      journal: false
+
 spring:
   application:
     name: notification
+  cloud:
+    config:
+      enabled: false
   jackson:
     serialization:
       write-durations-as-timestamps: false
   data:
-    mongodb:
-      host: localhost
-      port: 0
-      database: notification
   mail:
     host: localhost
   main:
     allow-bean-definition-overriding: true
+    allow-circular-references: true
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
   messages:
     basename: i18n/messages
   task:
@@ -82,11 +93,6 @@ jhipster:
   mail:
     from: test@localhost
     base-url: http://127.0.0.1:8080
-  metrics:
-    logs: # Reports metrics in the logs
-      enabled: true
-      report-frequency: 60 # in seconds
-
 # ===================================================================
 # Application specific properties
 # Add your own application properties here, see the ApplicationProperties class

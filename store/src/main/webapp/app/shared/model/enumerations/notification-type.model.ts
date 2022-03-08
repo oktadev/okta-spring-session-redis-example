@@ -1,4 +1,4 @@
-export const enum NotificationType {
+export enum NotificationType {
   EMAIL = 'EMAIL',
 
   SMS = 'SMS',

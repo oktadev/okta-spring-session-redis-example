@@ -1,16 +1,13 @@
 package com.jhipster.demo.product.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import javax.persistence.*;
-import javax.validation.constraints.*;
-
+import com.jhipster.demo.product.domain.enumeration.OrderItemStatus;
 import java.io.Serializable;
 import java.math.BigDecimal;
-
-import com.jhipster.demo.product.domain.enumeration.OrderItemStatus;
+import javax.persistence.*;
+import javax.validation.constraints.*;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 /**
  * A OrderItem.
@@ -24,6 +21,7 @@ public class OrderItem implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
 
     @NotNull
@@ -43,17 +41,23 @@ public class OrderItem implements Serializable {
 
     @ManyToOne(optional = false)
     @NotNull
-    @JsonIgnoreProperties(value = "orderItems", allowSetters = true)
+    @JsonIgnoreProperties(value = { "productCategory" }, allowSetters = true)
     private Product product;
 
     @ManyToOne(optional = false)
     @NotNull
-    @JsonIgnoreProperties(value = "orderItems", allowSetters = true)
+    @JsonIgnoreProperties(value = { "orderItems" }, allowSetters = true)
     private ProductOrder order;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here
+
     public Long getId() {
-        return id;
+        return this.id;
+    }
+
+    public OrderItem id(Long id) {
+        this.setId(id);
+        return this;
     }
 
     public void setId(Long id) {
@@ -61,11 +65,11 @@ public class OrderItem implements Serializable {
     }
 
     public Integer getQuantity() {
-        return quantity;
+        return this.quantity;
     }
 
     public OrderItem quantity(Integer quantity) {
-        this.quantity = quantity;
+        this.setQuantity(quantity);
         return this;
     }
 
@@ -74,11 +78,11 @@ public class OrderItem implements Serializable {
     }
 
     public BigDecimal getTotalPrice() {
-        return totalPrice;
+        return this.totalPrice;
     }
 
     public OrderItem totalPrice(BigDecimal totalPrice) {
-        this.totalPrice = totalPrice;
+        this.setTotalPrice(totalPrice);
         return this;
     }
 
@@ -87,11 +91,11 @@ public class OrderItem implements Serializable {
     }
 
     public OrderItemStatus getStatus() {
-        return status;
+        return this.status;
     }
 
     public OrderItem status(OrderItemStatus status) {
-        this.status = status;
+        this.setStatus(status);
         return this;
     }
 
@@ -100,30 +104,31 @@ public class OrderItem implements Serializable {
     }
 
     public Product getProduct() {
-        return product;
-    }
-
-    public OrderItem product(Product product) {
-        this.product = product;
-        return this;
+        return this.product;
     }
 
     public void setProduct(Product product) {
         this.product = product;
     }
 
-    public ProductOrder getOrder() {
-        return order;
+    public OrderItem product(Product product) {
+        this.setProduct(product);
+        return this;
     }
 
-    public OrderItem order(ProductOrder productOrder) {
-        this.order = productOrder;
-        return this;
+    public ProductOrder getOrder() {
+        return this.order;
     }
 
     public void setOrder(ProductOrder productOrder) {
         this.order = productOrder;
     }
+
+    public OrderItem order(ProductOrder productOrder) {
+        this.setOrder(productOrder);
+        return this;
+    }
+
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here
 
     @Override
@@ -139,7 +144,8 @@ public class OrderItem implements Serializable {
 
     @Override
     public int hashCode() {
-        return 31;
+        // see https://vladmihalcea.com/how-to-implement-equals-and-hashcode-using-the-jpa-entity-identifier/
+        return getClass().hashCode();
     }
 
     // prettier-ignore

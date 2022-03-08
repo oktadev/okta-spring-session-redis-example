@@ -1,13 +1,14 @@
 package com.jhipster.demo.notification.domain;
 
-import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
-import com.jhipster.demo.notification.web.rest.TestUtil;
 
-public class NotificationTest {
+import com.jhipster.demo.notification.web.rest.TestUtil;
+import org.junit.jupiter.api.Test;
+
+class NotificationTest {
 
     @Test
-    public void equalsVerifier() throws Exception {
+    void equalsVerifier() throws Exception {
         TestUtil.equalsVerifier(Notification.class);
         Notification notification1 = new Notification();
         notification1.setId("id1");

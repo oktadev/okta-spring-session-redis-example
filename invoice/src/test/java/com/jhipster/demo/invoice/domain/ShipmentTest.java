@@ -1,13 +1,14 @@
 package com.jhipster.demo.invoice.domain;
 
-import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
-import com.jhipster.demo.invoice.web.rest.TestUtil;
 
-public class ShipmentTest {
+import com.jhipster.demo.invoice.web.rest.TestUtil;
+import org.junit.jupiter.api.Test;
+
+class ShipmentTest {
 
     @Test
-    public void equalsVerifier() throws Exception {
+    void equalsVerifier() throws Exception {
         TestUtil.equalsVerifier(Shipment.class);
         Shipment shipment1 = new Shipment();
         shipment1.setId(1L);
